@@ -2,18 +2,22 @@
    "version": 2,
    "builds": [
      {
-       "src": "public/game.html",
+       "src": "**/*.html",
        "use": "@vercel/static"
      }
    ],
    "routes": [
      {
-       "src": "/game",
-       "dest": "/public/game.html"
+       "src": "/css/(.*)",
+       "dest": "/css/$1"
+     },
+     {
+       "src": "/js/(.*)",
+       "dest": "/js/$1"
      },
      {
        "src": "/(.*)",
-       "dest": "/public/game.html"
+       "dest": "/index.html"
      }
    ]
  }

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hero Wars Game</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Hero Wars</h1>
+            <p>Собери команду и стань легендой!</p>
+        </div>
+
+        <div class="user-info" id="user-info">
+            <div class="loading">Загрузка данных...</div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('heroes')">🏹 Мои Герои</button>
+            <button class="tab-button" onclick="showTab('team')">⚔️ Команда</button>
+            <button class="tab-button" onclick="showTab('battle')">🎯 Битва</button>
+        </div>
+
+        <div id="heroes-tab" class="tab-content">
+            <h2>Ваши герои</h2>
+            <div id="heroes-list" class="loading">Загрузка героев...</div>
+        </div>
+
+        <div id="team-tab" class="tab-content" style="display:none">
+            <h2>Создание команды</h2>
+            <p>Выберите 5 героев для вашей команды:</p>
+            <div class="team-builder" id="team-builder">
+                <div class="team-slot" data-position="1">Позиция 1</div>
+                <div class="team-slot" data-position="2">Позиция 2</div>
+                <div class="team-slot" data-position="3">Позиция 3</div>
+                <div class="team-slot" data-position="4">Позиция 4</div>
+                <div class="team-slot" data-position="5">Позиция 5</div>
+            </div>
+            <button class="upgrade-btn" onclick="saveTeam()" style="background: #3498db;">💾 Сохранить команду</button>
+            <div id="team-message"></div>
+        </div>
+
+        <div id="battle-tab" class="tab-content" style="display:none">
+            <h2>Арена битв</h2>
+            <p>Сразитесь с случайным противником!</p>
+            <button class="battle-btn" onclick="findBattle()">
+                ⚔️ Найти противника
+            </button>
+            <div id="battle-result"></div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
