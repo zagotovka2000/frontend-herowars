@@ -1,0 +1,60 @@
+.gameInfo {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   background: rgba(0, 0, 0, 0.3);
+   padding: 15px;
+   border-radius: 10px;
+ }
+ 
+ .playerInfo {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+ }
+ 
+ .playerName {
+   font-size: 1.2rem;
+   font-weight: bold;
+   margin-bottom: 3px;
+ }
+ 
+ .playerHealth {
+   font-size: 1.1rem;
+   color: #ff6b6b;
+ }
+ 
+ .turnIndicator {
+   text-align: center;
+   font-size: 1.1rem;
+   padding: 10px 20px;
+   background: rgba(255, 215, 0, 0.3);
+   border-radius: 25px;
+   animation: pulse 2s infinite;
+   font-weight: bold;
+ }
+ 
+ @keyframes pulse {
+   0% { background: rgba(255, 215, 0, 0.3); }
+   50% { background: rgba(255, 215, 0, 0.5); }
+   100% { background: rgba(255, 215, 0, 0.3); }
+ }
+ 
+ @media (max-width: 768px) {
+   .gameInfo {
+     padding: 10px;
+   }
+   
+   .playerName {
+     font-size: 1.1rem;
+   }
+   
+   .playerHealth {
+     font-size: 1rem;
+   }
+   
+   .turnIndicator {
+     font-size: 1rem;
+     padding: 8px 16px;
+   }
+ }
