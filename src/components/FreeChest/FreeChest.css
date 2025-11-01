@@ -1,0 +1,67 @@
+/* components/FreeChest/FreeChest.css */
+.free-chest-screen {
+   position: relative;
+   width: 100%;
+   height: 100vh;
+   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+ }
+ 
+ .free-chest-content {
+   padding: 80px 20px 20px;
+   text-align: center;
+   color: white;
+ }
+ 
+ .chest-container {
+   background: rgba(255, 255, 255, 0.1);
+   border-radius: 20px;
+   padding: 40px;
+   margin: 40px auto;
+   max-width: 400px;
+   backdrop-filter: blur(10px);
+   border: 2px solid rgba(255, 255, 255, 0.2);
+ }
+ 
+ .chest-icon {
+   font-size: 6rem;
+   margin-bottom: 20px;
+   animation: float 3s ease-in-out infinite;
+ }
+ 
+ @keyframes float {
+   0%, 100% { transform: translateY(0px); }
+   50% { transform: translateY(-10px); }
+ }
+ 
+ .chest-timer {
+   font-size: 1.2rem;
+   margin-bottom: 30px;
+   background: rgba(0, 0, 0, 0.3);
+   padding: 10px 20px;
+   border-radius: 10px;
+   display: inline-block;
+ }
+ 
+ .open-chest-button {
+   background: linear-gradient(135deg, #FFD700, #FFA500);
+   border: none;
+   border-radius: 15px;
+   padding: 15px 30px;
+   font-size: 1.2rem;
+   font-weight: bold;
+   color: #8B4513;
+   cursor: pointer;
+   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+   transition: all 0.3s ease;
+ }
+ 
+ .open-chest-button:disabled {
+   background: linear-gradient(135deg, #cccccc, #999999);
+   color: #666666;
+   cursor: not-allowed;
+ }
+ 
+ .open-chest-button:not(:disabled):hover {
+   transform: scale(1.05);
+   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+ }

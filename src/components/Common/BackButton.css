@@ -1,0 +1,70 @@
+/* components/Common/BackButton.css */
+.back-button {
+   position: absolute;
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   background: linear-gradient(135deg, 
+     rgba(139, 69, 19, 0.9) 0%, 
+     rgba(101, 67, 33, 0.9) 100%);
+   color: white;
+   border: 2px solid #D2691E;
+   border-radius: 25px;
+   padding: 10px 20px;
+   cursor: pointer;
+   font-weight: bold;
+   z-index: 1000;
+   box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+   transition: all 0.3s ease;
+   backdrop-filter: blur(5px);
+ }
+ 
+ .back-button:hover {
+   transform: scale(1.05);
+   background: linear-gradient(135deg, 
+     rgba(160, 82, 25, 0.95) 0%, 
+     rgba(120, 80, 40, 0.95) 100%);
+   box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+ }
+ 
+ .back-button:active {
+   transform: scale(1.02);
+ }
+ 
+ .back-button--small {
+   padding: 6px 12px;
+   font-size: 0.8rem;
+   gap: 5px;
+ }
+ 
+ .back-button--medium {
+   padding: 10px 20px;
+   font-size: 0.9rem;
+ }
+ 
+ .back-button--large {
+   padding: 12px 24px;
+   font-size: 1rem;
+   gap: 10px;
+ }
+ 
+ .back-button-icon {
+   font-size: 1.2em;
+   font-weight: bold;
+ }
+ 
+ .back-button-text {
+   text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+ }
+ 
+ /* Адаптивность */
+ @media (max-width: 768px) {
+   .back-button {
+     padding: 8px 16px;
+     font-size: 0.8rem;
+   }
+   
+   .back-button-icon {
+     font-size: 1.1em;
+   }
+ }

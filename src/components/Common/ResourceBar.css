@@ -1,0 +1,90 @@
+/* components/Common/ResourceBar.css */
+.resource-bar {
+   position: absolute;
+   top: 20px;
+   left: 50%;
+   transform: translateX(-50%);
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   gap: 20px;
+   background: linear-gradient(135deg, 
+     rgba(139, 69, 19, 0.8) 0%, 
+     rgba(101, 67, 33, 0.8) 50%, 
+     rgba(139, 69, 19, 0.8) 100%);
+   border: 2px solid #D2691E;
+   border-radius: 25px;
+   padding: 10px 25px;
+   z-index: 2; /* Между фоном и игровыми режимами */
+   box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+   backdrop-filter: blur(5px);
+   min-width: 300px;
+ }
+ 
+ .resource-item {
+   display: flex;
+   align-items: center;
+   gap: 5px;
+   color: white;
+   font-weight: bold;
+   font-size: 0.9rem;
+   text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+ }
+ 
+ .resource-icon {
+   font-size: 1.2rem;
+   filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+ }
+ 
+ .energy-bar {
+   width: 60px;
+   height: 8px;
+   background: rgba(0,0,0,0.3);
+   border-radius: 4px;
+   overflow: hidden;
+   margin-left: 5px;
+ }
+ 
+ .energy-fill {
+   height: 100%;
+   background: linear-gradient(90deg, #FFD700, #FF6B35);
+   transition: width 0.3s ease;
+ }
+ 
+ /* Адаптивность для мобильных устройств */
+ @media (max-width: 768px) {
+   .resource-bar {
+     gap: 15px;
+     padding: 8px 20px;
+     min-width: 280px;
+   }
+   
+   .resource-item {
+     font-size: 0.8rem;
+   }
+   
+   .energy-bar {
+     width: 50px;
+   }
+ }
+ 
+ @media (max-width: 480px) {
+   .resource-bar {
+     gap: 10px;
+     padding: 6px 15px;
+     min-width: 250px;
+     top: 10px;
+   }
+   
+   .resource-item {
+     font-size: 0.75rem;
+   }
+   
+   .resource-icon {
+     font-size: 1rem;
+   }
+   
+   .energy-bar {
+     width: 40px;
+   }
+ }

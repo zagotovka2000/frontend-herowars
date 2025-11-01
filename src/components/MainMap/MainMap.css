@@ -1,0 +1,127 @@
+/* components/MainMap/MainMap.css */
+.main-map {
+   position: relative;
+   width: 100%;
+   height: 100vh;
+   overflow: hidden;
+ }
+ 
+ .map-background {
+   position: absolute;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   background-image: url('../img/background.png');
+   background-size: cover;
+   background-position: center;
+   background-repeat: no-repeat;
+   z-index: 1;
+ }
+ 
+ .game-mode {
+   position: absolute;
+   display: flex;
+   align-items: center;
+   background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.9) 100%);
+   border: 2px solid #8B4513;
+   border-radius: 15px;
+   padding: 10px 15px;
+   cursor: pointer;
+   transition: all 0.3s ease;
+   box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+   z-index: 2;
+   min-width: 160px;
+   backdrop-filter: blur(5px);
+ }
+ 
+ .game-mode:hover {
+   transform: scale(1.05);
+   background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(250,250,250,1) 100%);
+   box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+ }
+ 
+ .game-mode.disabled {
+   opacity: 0.6;
+   cursor: not-allowed;
+   background: linear-gradient(135deg, rgba(200,200,200,0.7) 0%, rgba(180,180,180,0.7) 100%);
+ }
+ 
+ .game-mode.disabled:hover {
+   transform: none;
+ }
+ 
+ .mode-icon {
+   font-size: 2rem;
+   margin-right: 10px;
+   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+ }
+ 
+ .mode-content {
+   display: flex;
+   flex-direction: column;
+ }
+ 
+ .mode-name {
+   font-weight: bold;
+   font-size: 0.9rem;
+   color: #8B4513;
+   text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+   margin-bottom: 2px;
+ }
+ 
+ .mode-description {
+   font-size: 0.7rem;
+   color: #666;
+   margin-bottom: 4px;
+ }
+ 
+ .energy-cost {
+   font-size: 0.7rem;
+   color: #FF6B35;
+   font-weight: bold;
+ }
+ 
+ .guild-info {
+   position: absolute;
+   background: linear-gradient(135deg, rgba(139, 69, 19, 0.9) 0%, rgba(101, 67, 33, 0.9) 100%);
+   color: white;
+   padding: 10px 15px;
+   border-radius: 10px;
+   border: 2px solid #D2691E;
+   text-align: center;
+   z-index: 2;
+   box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+ }
+ 
+ .guild-name {
+   font-weight: bold;
+   font-size: 0.9rem;
+   margin-bottom: 2px;
+ }
+ 
+ .guild-rank {
+   font-size: 0.7rem;
+   opacity: 0.9;
+ }
+ 
+ /* Адаптивность для мобильных устройств */
+ @media (max-width: 768px) {
+   .game-mode {
+     min-width: 140px;
+     padding: 8px 12px;
+   }
+   
+   .mode-icon {
+     font-size: 1.5rem;
+     margin-right: 8px;
+   }
+   
+   .mode-name {
+     font-size: 0.8rem;
+   }
+   
+   .mode-description {
+     font-size: 0.65rem;
+   }
+ }
