@@ -1,37 +1,32 @@
 // components/Arena/Arena.js
 import React, { useEffect, useState } from 'react';
-import { mockApi } from '../../utils/mockApi';
+import { GameProvider } from '../../hooks/useGameState'; // Импортируем GameProvider
+import GameBoard from '../GameBoard/GameBoard'; // Импортируем компонент битвы
 import BackButton from '../Common/BackButton';
 import ResourceBar from '../Common/ResourceBar';
-
+import './Arena.css';
 
 const Arena = () => {
-  const [battleData, setBattleData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [battleStarted, setBattleStarted] = useState(false);
 
   useEffect(() => {
-    const startBattle = async () => {
-      try {
-        setLoading(true);
-        const result = await mockApi.battle();
-        setBattleData(result);
-      } catch (error) {
-        console.error('Battle error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Имитируем загрузку битвы
+    const timer = setTimeout(() => {
+      setBattleStarted(true);
+    }, 1000);
 
-    startBattle();
+    return () => clearTimeout(timer);
   }, []);
 
-  if (loading) {
+  if (!battleStarted) {
     return (
-      <div className="arena-loading">
+      <div className="arena-screen">
         <BackButton />
         <ResourceBar />
-        <div className="loading-spinner">⚔️</div>
-        <p>Поиск противника...</p>
+        <div className="arena-loading">
+          <div className="loading-spinner">⚔️</div>
+          <p>Поиск противника...</p>
+        </div>
       </div>
     );
   }
@@ -41,26 +36,16 @@ const Arena = () => {
       <BackButton />
       <ResourceBar />
       
-      <div className="arena-content">
-        <h2>⚔️ ПвП Арена</h2>
-        
-        {battleData && (
-          <div className="battle-info">
-            <div className="battle-id">Битва: {battleData.battleId}</div>
-            <div className="battle-result">
-              Результат: {battleData.result === 'victory' ? '🎉 Победа!' : '💔 Поражение'}
-            </div>
-            <div className="battle-rewards">
-              Награды: 💰 {battleData.rewards.gold} золота, 📚 {battleData.rewards.exp} опыта
-            </div>
+      {/* Оборачиваем GameBoard в GameProvider для доступа к состоянию битвы */}
+      <GameProvider>
+        <div className="arena-content">
+          <div className="arena-header">
+            <h2>⚔️ ПвП Арена</h2>
+            <p>Сразитесь с противником в эпической битве 5x5!</p>
           </div>
-        )}
-        
-        {/* Здесь будет ваш компонент битвы 5x5 */}
-        <div className="battle-interface">
-          <p>Интерфейс битвы 5x5...</p>
+          <GameBoard /> {/* Здесь происходит вся битва */}
         </div>
-      </div>
+      </GameProvider>
     </div>
   );
 };
