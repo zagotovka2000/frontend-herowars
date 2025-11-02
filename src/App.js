@@ -1,5 +1,6 @@
-// App.js
-import React, { useState } from 'react';
+import React from 'react';
+import { Provider } from 'react-redux';
+import { store } from './store';
 import MainMap from './components/MainMap/MainMap';
 import Campaign from './components/Campaign/Campaign';
 import Arena from './components/Arena/Arena';
@@ -10,14 +11,14 @@ import GuildWar from './components/GuildWar/GuildWar';
 import DailyReward from './components/DailyReward/DailyReward';
 import FreeChest from './components/FreeChest/FreeChest';
 import Expedition from './components/Expedition/Expedition';
-import { AppProvider, useApp } from './contex/AppContext';
-import { NavigationProvider, useNavigation } from './contex/NavigationContext.js';
+import { useAppSelector } from './store/hooks';
+import { selectCurrentScreen } from './store/slices/navigationSlice';
 
 import './App.css';
 
 // Компонент-обертка для использования навигации
 function AppContent() {
-  const { currentScreen } = useNavigation();
+  const currentScreen = useAppSelector(selectCurrentScreen);
   
   const renderScreen = () => {
     switch (currentScreen) {
@@ -45,11 +46,9 @@ function AppContent() {
 
 function App() {
   return (
-    <AppProvider>
-      <NavigationProvider>
-        <AppContent />
-      </NavigationProvider>
-    </AppProvider>
+    <Provider store={store}>
+      <AppContent />
+    </Provider>
   );
 }
 

@@ -1,38 +1,36 @@
-// components/Common/ResourceBar.js
 import React from 'react';
-import { useApp } from '../../contex/AppContext';
+import { useAppSelector } from '../../store/hooks';
 import './ResourceBar.css';
 
-
 const ResourceBar = () => {
-  const { state } = useApp();
+  const user = useAppSelector(state => state.app.user);
 
   return (
     <div className="resource-bar">
       <div className="resource-item">
         <span className="resource-icon">⚡</span>
-        <span>{state.user.energy}/{state.user.maxEnergy}</span>
+        <span>{user.energy}/{user.maxEnergy}</span>
         <div className="energy-bar">
           <div 
             className="energy-fill"
-            style={{ width: `${(state.user.energy / state.user.maxEnergy) * 100}%` }}
+            style={{ width: `${(user.energy / user.maxEnergy) * 100}%` }}
           />
         </div>
       </div>
       
       <div className="resource-item">
         <span className="resource-icon">💰</span>
-        <span>{state.user.gold}</span>
+        <span>{user.gold}</span>
       </div>
       
       <div className="resource-item">
         <span className="resource-icon">💎</span>
-        <span>{state.user.gems}</span>
+        <span>{user.gems}</span>
       </div>
       
       <div className="resource-item">
         <span className="resource-icon">⚔️</span>
-        <span>Мощь: {state.user.power}</span>
+        <span>Мощь: {user.power}</span>
       </div>
     </div>
   );

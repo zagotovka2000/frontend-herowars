@@ -1,31 +1,69 @@
-import { useCallback } from 'react';
-import { useGameState } from './useGameState';
-import { useSound } from './useSound';
+import { useCallback, useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import {
+  selectPlayerCard,
+  selectEnemyCard,
+  updateCardHealth,
+  removeCard,
+  setAnimation,
+  clearAnimation,
+  setTurn,
+  resetSelection,
+  showBattleResultModal,
+  hideBattleResultModal
+} from '../store/slices/gameSlice';
 
-// Выносим calculateDamage в этот файл
 const calculateDamage = (attackerValue) => {
   return Math.max(1, attackerValue - Math.floor(Math.random() * 3));
 };
 
 export const useBattle = () => {
-  const { state, dispatch } = useGameState();
-  const { playSound } = useSound();
+  const dispatch = useAppDispatch();
+  const gameState = useAppSelector(state => state.game);
 
+  // ★★★ ФУНКЦИЯ ДЛЯ ПРОВЕРКИ ЗАВЕРШЕНИЯ БОЯ ПО КАРТАМ ★★★
+  const checkBattleEndByCards = useCallback(() => {
+    // Используем актуальное состояние из Redux
+    const currentState = gameState;
+    
+    if (currentState.showBattleResultModal) {
+      return true;
+    }
+    
+    const alivePlayerCards = currentState.playerCards.filter(card => card.health > 0);
+    const aliveEnemyCards = currentState.enemyCards.filter(card => card.health > 0);
+    
+    if (alivePlayerCards.length === 0) {
+      console.log('Бой завершен: поражение - нет живых карт у игрока');
+      dispatch(showBattleResultModal('defeat'));
+      return true;
+    }
+    else if (aliveEnemyCards.length === 0) {
+      console.log('Бой завершен: победа - нет живых карт у противника');
+      dispatch(showBattleResultModal('victory'));
+      return true;
+    }
+    return false;
+  }, [gameState, dispatch]); // Добавляем gameState в зависимости
+
+  // ★★★ ХОД ПРОТИВНИКА ★★★
   const enemyTurn = useCallback(() => {
     console.log('enemyTurn started');
     
-    // Фильтруем только живые карты противника
-    const aliveEnemyCards = state.enemyCards.filter(card => card.health > 0);
-    // Фильтруем только живые карты игрока
-    const alivePlayerCards = state.playerCards.filter(card => card.health > 0);
+    // Сначала проверяем, не закончился ли бой по картам
+    if (checkBattleEndByCards()) {
+      return;
+    }
+    
+    const aliveEnemyCards = gameState.enemyCards.filter(card => card.health > 0);
+    const alivePlayerCards = gameState.playerCards.filter(card => card.health > 0);
 
     if (aliveEnemyCards.length === 0 || alivePlayerCards.length === 0) {
       console.log('No alive cards for enemy turn');
-      dispatch({ type: 'SET_TURN', isPlayerTurn: true });
+      dispatch(setTurn(true));
       return;
     }
 
-    // Выбираем случайные карты для атаки и защиты
     const attackingCard = aliveEnemyCards[Math.floor(Math.random() * aliveEnemyCards.length)];
     const defendingCard = alivePlayerCards[Math.floor(Math.random() * alivePlayerCards.length)];
 
@@ -36,155 +74,210 @@ export const useBattle = () => {
       defendingCardValue: defendingCard.value
     });
 
-    // Устанавливаем анимацию - противник атакует, игрок защищается
-    dispatch({ 
-      type: 'SET_ANIMATION', 
-      attackingCardId: attackingCard.id, 
-      defendingCardId: defendingCard.id 
-    });
+    dispatch(setAnimation({
+      attackingCardId: attackingCard.id,
+      defendingCardId: defendingCard.id
+    }));
 
     const damage = calculateDamage(attackingCard.value);
-    // playSound('attack');
-
     const newHealth = defendingCard.health - damage;
 
     setTimeout(() => {
-      // Обновляем здоровье карты игрока
-      dispatch({
-        type: 'UPDATE_CARD_HEALTH',
+      dispatch(updateCardHealth({
         cardId: defendingCard.id,
         newHealth,
         isPlayerCard: true
-      });
+      }));
 
       if (newHealth <= 0) {
         setTimeout(() => {
-          // Удаляем карту игрока
-          dispatch({
-            type: 'REMOVE_CARD',
+          dispatch(removeCard({
             cardId: defendingCard.id,
             isPlayerCard: true
-          });
+          }));
 
-          // Прямой урон, если у игрока не осталось живых карт
-          const remainingPlayerCards = state.playerCards.filter(card => card.health > 0 && card.id !== defendingCard.id);
-          if (remainingPlayerCards.length === 0) {
-            const directDamage = 10;
-            dispatch({
-              type: 'UPDATE_HEALTH',
-              playerHealth: Math.max(0, state.playerHealth - directDamage)
-            });
-          }
-
-          // Сбрасываем анимацию
-          dispatch({ type: 'CLEAR_ANIMATION' });
-          dispatch({ type: 'SET_TURN', isPlayerTurn: true });
+          // ★★★ ПРОВЕРЯЕМ ЗАВЕРШЕНИЕ БОЯ ПО КАРТАМ ★★★
+          setTimeout(() => {
+            if (!checkBattleEndByCards()) {
+              dispatch(clearAnimation());
+              dispatch(setTurn(true));
+            }
+          }, 100);
         }, 1000);
       } else {
-        // Сбрасываем анимацию
-        dispatch({ type: 'CLEAR_ANIMATION' });
-        dispatch({ type: 'SET_TURN', isPlayerTurn: true });
+        dispatch(clearAnimation());
+        dispatch(setTurn(true));
       }
     }, 1000);
-  }, [state, dispatch]);
+  }, [gameState, dispatch, checkBattleEndByCards]);
 
+  // ★★★ РУЧНАЯ АТАКА ИГРОКА ★★★
   const performAttack = useCallback(() => {
+    if (gameState.battleMode === 'auto') {
+      console.log('В автоматическом режиме атака не требуется');
+      return;
+    }
+
     console.log('performAttack started:', {
-      playerCard: state.selectedPlayerCard,
-      enemyCard: state.selectedEnemyCard,
-      attackingCardId: state.attackingCardId,
-      defendingCardId: state.defendingCardId
+      playerCard: gameState.selectedPlayerCard,
+      enemyCard: gameState.selectedEnemyCard
     });
 
-    // Фильтруем только живые карты
-    const alivePlayerCards = state.playerCards.filter(card => card.health > 0);
-    const aliveEnemyCards = state.enemyCards.filter(card => card.health > 0);
+    // ★★★ ПРОВЕРЯЕМ, НЕ ЗАВЕРШИЛСЯ ЛИ УЖЕ БОЙ ★★★
+    const alivePlayerCards = gameState.playerCards.filter(card => card.health > 0);
+    const aliveEnemyCards = gameState.enemyCards.filter(card => card.health > 0);
+    
+    if (alivePlayerCards.length === 0 || aliveEnemyCards.length === 0) {
+      console.log('Бой уже завершен, атака невозможна');
+      return;
+    }
 
-    if (!state.isPlayerTurn || 
-        !state.selectedPlayerCard || 
-        !state.selectedEnemyCard ||
-        alivePlayerCards.length === 0 ||
-        aliveEnemyCards.length === 0) {
+    if (!gameState.isPlayerTurn || 
+        !gameState.selectedPlayerCard || 
+        !gameState.selectedEnemyCard) {
       console.log('Attack conditions not met');
       return;
     }
 
-    const playerCard = state.selectedPlayerCard;
-    const enemyCard = state.selectedEnemyCard;
+    const playerCard = gameState.selectedPlayerCard;
+    const enemyCard = gameState.selectedEnemyCard;
 
-    // Проверяем, что выбранные карты еще живы
     if (playerCard.health <= 0 || enemyCard.health <= 0) {
-      dispatch({ type: 'RESET_SELECTION' });
+      dispatch(resetSelection());
       return;
     }
 
-    // Устанавливаем анимацию - игрок атакует, противник защищается
-    dispatch({ 
-      type: 'SET_ANIMATION', 
-      attackingCardId: playerCard.id, 
-      defendingCardId: enemyCard.id 
-    });
+    dispatch(setAnimation({
+      attackingCardId: playerCard.id,
+      defendingCardId: enemyCard.id
+    }));
 
     const damage = calculateDamage(playerCard.value);
-    // playSound('attack');
-
     const newHealth = enemyCard.health - damage;
     
     setTimeout(() => {
-      // Обновляем здоровье карты противника
-      dispatch({
-        type: 'UPDATE_CARD_HEALTH',
+      dispatch(updateCardHealth({
         cardId: enemyCard.id,
         newHealth,
         isPlayerCard: false
-      });
+      }));
 
       if (newHealth <= 0) {
         setTimeout(() => {
-          // Удаляем карту противника
-          dispatch({
-            type: 'REMOVE_CARD',
+          dispatch(removeCard({
             cardId: enemyCard.id,
             isPlayerCard: false
-          });
+          }));
 
-          // Прямой урон, если у противника не осталось живых карт
-          const remainingEnemyCards = state.enemyCards.filter(card => card.health > 0 && card.id !== enemyCard.id);
-          const directDamage = 10;
-          if (remainingEnemyCards.length === 0) {
-            dispatch({
-              type: 'UPDATE_HEALTH',
-              enemyHealth: Math.max(0, state.enemyHealth - directDamage)
-            });
-          }
-
-          // Сбрасываем анимацию и выделение
-          dispatch({ type: 'CLEAR_ANIMATION' });
-          dispatch({ type: 'RESET_SELECTION' });
-          
-          // Передаем ход противнику только если игра не закончилась
-          if (state.enemyHealth > directDamage) {
-            dispatch({ type: 'SET_TURN', isPlayerTurn: false });
-            setTimeout(enemyTurn, 1000);
-          }
+          // ★★★ ПРОВЕРЯЕМ ЗАВЕРШЕНИЕ БОЯ ПО КАРТАМ ★★★
+          setTimeout(() => {
+            if (!checkBattleEndByCards()) {
+              dispatch(clearAnimation());
+              dispatch(resetSelection());
+              dispatch(setTurn(false));
+              setTimeout(enemyTurn, 1000);
+            }
+          }, 100);
         }, 1000);
       } else {
-        // Сбрасываем анимацию и выделение
-        dispatch({ type: 'CLEAR_ANIMATION' });
-        dispatch({ type: 'RESET_SELECTION' });
-        dispatch({ type: 'SET_TURN', isPlayerTurn: false });
+        dispatch(clearAnimation());
+        dispatch(resetSelection());
+        dispatch(setTurn(false));
         setTimeout(enemyTurn, 1000);
       }
     }, 1000);
-  }, [state, dispatch, enemyTurn]);
+  }, [gameState, dispatch, enemyTurn, checkBattleEndByCards]);
 
-  const resetGame = useCallback(() => {
-    dispatch({ type: 'RESET_GAME' });
+  // ★★★ АВТОМАТИЧЕСКАЯ АТАКА ИГРОКА ★★★
+  const autoPlayerAttack = useCallback(() => {
+    console.log('Автоматическая атака игрока');
+    
+    // ★★★ ПРОВЕРЯЕМ, НЕ ЗАВЕРШИЛСЯ ЛИ УЖЕ БОЙ ★★★
+    const alivePlayerCards = gameState.playerCards.filter(card => card.health > 0);
+    const aliveEnemyCards = gameState.enemyCards.filter(card => card.health > 0);
+    
+    if (alivePlayerCards.length === 0 || aliveEnemyCards.length === 0) {
+      console.log('Бой уже завершен, автоматическая атака невозможна');
+      // ★★★ ДОБАВЛЯЕМ ПРОВЕРКУ ЗАВЕРШЕНИЯ БОЯ ★★★
+      checkBattleEndByCards();
+      return;
+    }
+    
+    const randomPlayerCard = alivePlayerCards[Math.floor(Math.random() * alivePlayerCards.length)];
+    const randomEnemyCard = aliveEnemyCards[Math.floor(Math.random() * aliveEnemyCards.length)];
+    
+    console.log('Авто-атака:', {
+      playerCard: randomPlayerCard.id,
+      enemyCard: randomEnemyCard.id
+    });
+    
+    dispatch(selectPlayerCard(randomPlayerCard));
+    dispatch(selectEnemyCard(randomEnemyCard));
+    
+    dispatch(setAnimation({
+      attackingCardId: randomPlayerCard.id,
+      defendingCardId: randomEnemyCard.id
+    }));
+    
+    const damage = calculateDamage(randomPlayerCard.value);
+    const newHealth = randomEnemyCard.health - damage;
+    
+    setTimeout(() => {
+      dispatch(updateCardHealth({
+        cardId: randomEnemyCard.id,
+        newHealth,
+        isPlayerCard: false
+      }));
+      
+      if (newHealth <= 0) {
+        setTimeout(() => {
+          dispatch(removeCard({
+            cardId: randomEnemyCard.id,
+            isPlayerCard: false
+          }));
+          
+          // ★★★ ПРОВЕРЯЕМ ЗАВЕРШЕНИЕ БОЯ ПО КАРТАМ ★★★
+          setTimeout(() => {
+            if (!checkBattleEndByCards()) {
+              dispatch(clearAnimation());
+              dispatch(resetSelection());
+              dispatch(setTurn(false));
+              setTimeout(enemyTurn, 1000);
+            }
+          }, 100);
+        }, 1000);
+      } else {
+        dispatch(clearAnimation());
+        dispatch(resetSelection());
+        dispatch(setTurn(false));
+        setTimeout(enemyTurn, 1000);
+      }
+    }, 1000);
+  }, [gameState, dispatch, enemyTurn, checkBattleEndByCards]);
+  
+  // ★★★ useEffect ДЛЯ АВТОМАТИЧЕСКОГО РЕЖИМА ★★★
+  useEffect(() => {
+    if (gameState.battleMode === 'auto' && 
+        gameState.isPlayerTurn && 
+        gameState.playerHealth > 0 && 
+        gameState.enemyHealth > 0) {
+      
+      const autoAttackTimer = setTimeout(() => {
+        autoPlayerAttack();
+      }, 1500);
+      
+      return () => clearTimeout(autoAttackTimer);
+    }
+  }, [gameState.battleMode, gameState.isPlayerTurn, gameState.playerHealth, gameState.enemyHealth, autoPlayerAttack]);
+
+  const closeBattleResultModal = useCallback(() => {
+    dispatch(hideBattleResultModal());
   }, [dispatch]);
 
   return {
     performAttack,
     enemyTurn,
-    resetGame
+    autoPlayerAttack,
+    closeBattleResultModal
   };
 };

@@ -1,20 +1,19 @@
 import React from 'react';
-import { useGameState } from '../../hooks/useGameState';
-import styles from './Card.module.css';
+import { useAppSelector } from '../../store/hooks';
+import './Card.css';
 
 const Card = ({ 
   card, 
   type, 
   isSelected, 
   isDefeated,
-  onClick 
+  onClick,
+  battleMode
 }) => {
-  const { state } = useGameState();
+  const gameState = useAppSelector(state => state.game);
   
-  // Определяем, является ли эта карта атакующей или защищающейся
-  // Теперь ID уникальны, так что не будет конфликтов
-  const isAttacking = state.attackingCardId === card.id;
-  const isDefending = state.defendingCardId === card.id;
+  const isAttacking = gameState.attackingCardId === card.id;
+  const isDefending = gameState.defendingCardId === card.id;
 
   const handleClick = () => {
     if (onClick && !isDefeated && card.health > 0) {
@@ -22,33 +21,39 @@ const Card = ({
     }
   };
 
-  // Формируем классы для карточки
   const cardClasses = [
-    styles.card,
-    isSelected ? styles.selected : '',
-    isAttacking ? styles.attacking : '',
-    isDefending ? styles.defending : '',
-    isDefeated ? styles.defeated : '',
-    isAttacking ? 'animate__animated animate__pulse' : '',
-    isDefending ? 'shake-constant shake-horizontal' : '',
-    isDefeated ? 'animate__animated animate__bounceOut' : ''
+    'card',
+    type,
+    isSelected ? 'selected' : '',
+    isAttacking ? 'attacking' : '',
+    isDefending ? 'defending' : '',
+    isDefeated ? 'defeated' : '',
+    battleMode === 'auto' ? 'auto-mode' : ''
   ].filter(Boolean).join(' ');
 
   return (
     <div className={cardClasses} onClick={handleClick}>
-      <div className={styles.cardValue}>{card.value}</div>
+      <div className="card-value">⚔️ {card.value}</div>
+      
+      <div className="card-health">❤️ {card.health}/{card.maxHealth}</div>
+      
       {card.health < card.maxHealth && card.health > 0 && (
-        <div className={styles.healthBar}>
+        <div className="health-bar">
           <div 
-            className={styles.healthFill} 
+            className="health-fill" 
             style={{ 
               width: `${(card.health / card.maxHealth) * 100}%` 
             }} 
           />
         </div>
       )}
+      
       {card.health <= 0 && (
-        <div className={styles.deadOverlay}>💀</div>
+        <div className="dead-overlay">💀</div>
+      )}
+      
+      {battleMode === 'auto' && (
+        <div className="auto-badge">🤖</div>
       )}
     </div>
   );

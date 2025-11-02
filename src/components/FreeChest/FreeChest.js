@@ -1,9 +1,7 @@
-     
-      // components/FreeChest/FreeChest.js
-      import React from 'react';
-      import BackButton from '../Common/BackButton';
-      import ResourceBar from '../Common/ResourceBar';
-      import './FreeChest.css';
+import React from 'react';
+import BackButton from '../Common/BackButton';
+import ResourceBar from '../Common/ResourceBar';
+import './FreeChest.css';
 
 const FreeChest = () => {
   return (

@@ -1,24 +1,31 @@
 import React from 'react';
-import { useGameState } from '../../hooks/useGameState';
-import styles from './GameInfo.module.css';
+import { useAppSelector } from '../../store/hooks';
+import './GameInfo.css';
 
 const GameInfo = () => {
-  const { state } = useGameState();
+  const { playerCards, enemyCards, isPlayerTurn, battleMode } = useAppSelector(state => state.game);
+  
+  const alivePlayerCards = playerCards.filter(card => card.health > 0).length;
+  const aliveEnemyCards = enemyCards.filter(card => card.health > 0).length;
 
   return (
-    <div className={styles.gameInfo}>
-      <div className={styles.playerInfo}>
-        <div className={styles.playerName}>Игрок</div>
-        <div className={styles.playerHealth}>❤️ {state.playerHealth}</div>
+    <div className="game-info">
+      <div className="cards-count">
+        <div className="count-item">
+          <span>Ваши карты: {alivePlayerCards}/5</span>
+        </div>
+        <div className="count-item">
+          <span>Карты противника: {aliveEnemyCards}/5</span>
+        </div>
       </div>
       
-      <div className={styles.turnIndicator}>
-        {state.isPlayerTurn ? "Ваш ход!" : "Ход противника..."}
-      </div>
-      
-      <div className={styles.playerInfo}>
-        <div className={styles.playerName}>Противник</div>
-        <div className={styles.playerHealth}>❤️ {state.enemyHealth}</div>
+      <div className="battle-info">
+        <div className={`turn-indicator ${isPlayerTurn ? 'player-turn' : 'enemy-turn'}`}>
+          {isPlayerTurn ? '🎯 Ваш ход' : '⚡ Ход противника'}
+        </div>
+        <div className={`mode-indicator ${battleMode}`}>
+          Режим: {battleMode === 'manual' ? '⚔️ Ручной' : '🤖 Автоматический'}
+        </div>
       </div>
     </div>
   );

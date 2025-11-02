@@ -51,3 +51,22 @@
      font-size: 0.9rem;
    }
  }
+ .mode-toggle {
+   padding: 8px 16px;
+   border: 2px solid #4CAF50;
+   background: #2E7D32;
+   color: white;
+   border-radius: 20px;
+   cursor: pointer;
+   font-weight: bold;
+   transition: all 0.3s;
+ }
+ 
+ .mode-toggle.auto {
+   background: #FF9800;
+   border-color: #FFC107;
+ }
+ .mode-toggle:hover {
+   transform: scale(1.05);
+ }
+ 

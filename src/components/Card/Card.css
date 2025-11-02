@@ -1,0 +1,155 @@
+/* ★★★ ОСНОВНЫЕ СТИЛИ КАРТЫ ★★★ */
+.card {
+   position: relative;
+   width: 100px;
+   height: 140px;
+   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+   border: 3px solid #4CAF50;
+   border-radius: 12px;
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+   align-items: center;
+   cursor: pointer;
+   transition: all 0.3s ease;
+   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+   color: white;
+   font-weight: bold;
+   margin: 5px;
+ }
+ 
+ /* ★★★ СТИЛИ ДЛЯ КАРТ ИГРОКА ★★★ */
+ .card.player {
+   border-color: #4CAF50;
+   background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+ }
+ 
+ /* ★★★ СТИЛИ ДЛЯ КАРТ ПРОТИВНИКА ★★★ */
+ .card.enemy {
+   border-color: #F44336;
+   background: linear-gradient(135deg, #F44336 0%, #d32f2f 100%);
+ }
+ 
+ /* ★★★ ВЫБРАННАЯ КАРТА ★★★ */
+ .card.selected {
+   transform: scale(1.1);
+   box-shadow: 0 0 20px gold;
+   border-color: gold;
+ }
+ 
+ /* ★★★ АТАКУЮЩАЯ КАРТА ★★★ */
+ .card.attacking {
+   animation: pulse 0.5s infinite;
+   box-shadow: 0 0 15px #FF9800;
+ }
+ 
+ @keyframes pulse {
+   0% { transform: scale(1); }
+   50% { transform: scale(1.05); }
+   100% { transform: scale(1); }
+ }
+ 
+ /* ★★★ ЗАЩИЩАЮЩАЯСЯ КАРТА ★★★ */
+ .card.defending {
+   animation: shake 0.5s infinite;
+   box-shadow: 0 0 15px #2196F3;
+ }
+ 
+ @keyframes shake {
+   0% { transform: translateX(0); }
+   25% { transform: translateX(-3px); }
+   50% { transform: translateX(3px); }
+   75% { transform: translateX(-3px); }
+   100% { transform: translateX(0); }
+ }
+ 
+ /* ★★★ УБИТАЯ КАРТА ★★★ */
+ .card.defeated {
+   opacity: 0.5;
+   background: linear-gradient(135deg, #666 0%, #333 100%);
+   border-color: #333;
+   cursor: not-allowed;
+ }
+ 
+ /* ★★★ КАРТА В АВТО-РЕЖИМЕ ★★★ */
+ .card.auto-mode {
+   opacity: 0.7;
+   cursor: not-allowed;
+ }
+ 
+ /* ★★★ ЗНАЧЕНИЕ КАРТЫ (СИЛА) ★★★ */
+ .card-value {
+   font-size: 24px;
+   margin-bottom: 10px;
+   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+ }
+ 
+ /* ★★★ ЗДОРОВЬЕ КАРТЫ ★★★ */
+ .card-health {
+   font-size: 14px;
+   background: rgba(0, 0, 0, 0.5);
+   padding: 2px 8px;
+   border-radius: 10px;
+   margin-top: 5px;
+ }
+ 
+ /* ★★★ ПОЛОСА ЗДОРОВЬЯ ★★★ */
+ .health-bar {
+   position: absolute;
+   bottom: 5px;
+   left: 10px;
+   right: 10px;
+   height: 6px;
+   background: rgba(0, 0, 0, 0.3);
+   border-radius: 3px;
+   overflow: hidden;
+ }
+ 
+ .health-fill {
+   height: 100%;
+   background: linear-gradient(90deg, #4CAF50, #8BC34A);
+   transition: width 0.3s ease;
+ }
+ 
+ /* ★★★ ОВЕРЛЕЙ СМЕРТИ ★★★ */
+ .dead-overlay {
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   bottom: 0;
+   background: rgba(0, 0, 0, 0.7);
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   font-size: 40px;
+   border-radius: 9px;
+ }
+ 
+ /* ★★★ БЕЙДЖ АВТО-РЕЖИМА ★★★ */
+ .auto-badge {
+   position: absolute;
+   top: 5px;
+   right: 5px;
+   background: #FF9800;
+   color: white;
+   border-radius: 50%;
+   width: 20px;
+   height: 20px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-size: 12px;
+   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+ }
+ 
+ /* ★★★ HOVER ЭФФЕКТ (ТОЛЬКО ДЛЯ РУЧНОГО РЕЖИМА) ★★★ */
+ .card:not(.auto-mode):hover {
+   transform: translateY(-5px);
+   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+ }
+ 
+ .card.auto-mode:hover {
+   transform: none;
+   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+ }

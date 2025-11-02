@@ -1,6 +1,6 @@
-// components/Common/BackButton.js
 import React from 'react';
-import { useNavigation } from '../../contex/NavigationContext';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { navigateBack, selectCanGoBack } from '../../store/slices/navigationSlice';
 import './BackButton.css';
 
 const BackButton = ({ 
@@ -8,14 +8,15 @@ const BackButton = ({
   size = 'medium',
   customText = null 
 }) => {
-  const { navigateBack, canGoBack } = useNavigation();
+  const dispatch = useAppDispatch();
+  const canGoBack = useAppSelector(selectCanGoBack);
 
   if (!canGoBack) {
-    return null; // Не показываем кнопку на главном экране
+    return null;
   }
 
   const handleClick = () => {
-    navigateBack();
+    dispatch(navigateBack());
   };
 
   const buttonClass = `back-button back-button--${size}`;

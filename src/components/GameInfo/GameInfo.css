@@ -58,3 +58,25 @@
      padding: 8px 16px;
    }
  }
+/* В GameInfo.css */
+.cards-count {
+   display: flex;
+   justify-content: space-between;
+   margin-bottom: 15px;
+   background: rgba(255, 255, 255, 0.1);
+   padding: 10px;
+   border-radius: 10px;
+ }
+ 
+ .count-item {
+   font-weight: bold;
+   color: white;
+ }
+ 
+ .count-item:first-child {
+   color: #4CAF50; /* Зеленый для игрока */
+ }
+ 
+ .count-item:last-child {
+   color: #F44336; /* Красный для противника */
+ }

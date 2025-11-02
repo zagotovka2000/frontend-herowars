@@ -1,15 +1,14 @@
-// components/MainMap/MainMap.js
 import React from 'react';
-import { useApp } from '../../contex/AppContext';
-import { useNavigation } from '../../contex/NavigationContext'; // Добавляем импорт
+import { useAppSelector, useAppDispatch } from '../../store/hooks';
+import { navigateTo } from '../../store/slices/navigationSlice';
 import ResourceBar from '../Common/ResourceBar';
 import './MainMap.css';
 
 const MainMap = () => {
-  const { state } = useApp();
-  const { navigateTo } = useNavigation(); // Получаем navigateTo из контекста
+  const dispatch = useAppDispatch();
+  const user = useAppSelector(state => state.app.user);
+  const guild = useAppSelector(state => state.app.guild);
 
-  // Массив игровых режимов с позициями
   const gameModes = [
     {
       id: 'campaign',
@@ -89,27 +88,21 @@ const MainMap = () => {
   const handleModeClick = async (mode) => {
     console.log(`Переход в режим: ${mode.name}`);
     
-    // Временная заглушка для серверных вызовов
     if (mode.serverEndpoint) {
       try {
         console.log(`Вызов API: ${mode.serverEndpoint}`);
-        
-        // Заглушка - имитация API вызова
         const mockResponse = await mockApiCall(mode.serverEndpoint);
         console.log('Ответ сервера:', mockResponse);
         
-        // Используем navigateTo из контекста навигации
-        navigateTo(mode.id);
+        dispatch(navigateTo(mode.id));
       } catch (error) {
         console.error('Ошибка API:', error);
       }
     } else {
-      // Используем navigateTo из контекста навигации
-      navigateTo(mode.id);
+      dispatch(navigateTo(mode.id));
     }
   };
 
-  // Заглушка для имитации API вызовов
   const mockApiCall = (endpoint) => {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -127,11 +120,10 @@ const MainMap = () => {
       <div className="map-background"></div>
       <ResourceBar />
       
-      {/* Игровые режимы */}
       {gameModes.map(mode => (
         <div
           key={mode.id}
-          className={`game-mode ${state.user.energy < (mode.energyCost || 0) ? 'disabled' : ''}`}
+          className={`game-mode ${user.energy < (mode.energyCost || 0) ? 'disabled' : ''}`}
           style={mode.position}
           onClick={() => handleModeClick(mode)}
         >
@@ -146,11 +138,10 @@ const MainMap = () => {
         </div>
       ))}
 
-      {/* Информация о гильдии (если есть) */}
-      {state.guild && (
+      {guild && (
         <div className="guild-info" style={{ top: '5%', right: '5%' }}>
-          <div className="guild-name">{state.guild.name}</div>
-          <div className="guild-rank">Ранг: #{state.guild.rank}</div>
+          <div className="guild-name">{guild.name}</div>
+          <div className="guild-rank">Ранг: #{guild.rank}</div>
         </div>
       )}
     </div>

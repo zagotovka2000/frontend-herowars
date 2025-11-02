@@ -1,22 +1,25 @@
-// components/Arena/Arena.js
 import React, { useEffect, useState } from 'react';
-import { GameProvider } from '../../hooks/useGameState'; // Импортируем GameProvider
-import GameBoard from '../GameBoard/GameBoard'; // Импортируем компонент битвы
+import { useAppDispatch } from '../../store/hooks';
+import { initGame } from '../../store/slices/gameSlice';
+import GameBoard from '../GameBoard/GameBoard';
 import BackButton from '../Common/BackButton';
 import ResourceBar from '../Common/ResourceBar';
 import './Arena.css';
 
-const Arena = () => {
+const Arena = ({ onScreenChange }) => {
+  const dispatch = useAppDispatch();
   const [battleStarted, setBattleStarted] = useState(false);
 
   useEffect(() => {
-    // Имитируем загрузку битвы
+    // Инициализируем игру при входе в арену
+    dispatch(initGame());
+    
     const timer = setTimeout(() => {
       setBattleStarted(true);
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [dispatch]);
 
   if (!battleStarted) {
     return (
@@ -36,16 +39,13 @@ const Arena = () => {
       <BackButton />
       <ResourceBar />
       
-      {/* Оборачиваем GameBoard в GameProvider для доступа к состоянию битвы */}
-      <GameProvider>
-        <div className="arena-content">
-          <div className="arena-header">
-            <h2>⚔️ ПвП Арена</h2>
-            <p>Сразитесь с противником в эпической битве 5x5!</p>
-          </div>
-          <GameBoard /> {/* Здесь происходит вся битва */}
+      <div className="arena-content">
+        <div className="arena-header">
+          <h2>⚔️ ПвП Арена</h2>
+          <p>Сразитесь с противником в эпической битве 5x5!</p>
         </div>
-      </GameProvider>
+        <GameBoard onScreenChange={onScreenChange} />
+      </div>
     </div>
   );
 };

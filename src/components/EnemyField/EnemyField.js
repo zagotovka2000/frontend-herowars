@@ -1,28 +1,42 @@
 import React from 'react';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { selectEnemyCard } from '../../store/slices/gameSlice';
 import Card from '../Card/Card';
-import { useGameState } from '../../hooks/useGameState';
-import styles from './EnemyField.module.css';
+import './EnemyField.css';
 
 const EnemyField = () => {
-  const { state, dispatch } = useGameState();
+  const dispatch = useAppDispatch();
+  const { enemyCards, selectedEnemyCard, selectedPlayerCard, battleMode } = useAppSelector(state => state.game);
 
   const handleCardSelect = (card) => {
-    if (state.isPlayerTurn && state.selectedPlayerCard) {
-      dispatch({ type: 'SELECT_ENEMY_CARD', card });
+    if (battleMode === 'auto') {
+      return;
+    }
+
+    if (selectedPlayerCard) {
+      dispatch(selectEnemyCard(card));
     }
   };
 
   return (
-    <div className={styles.cardsContainer}>
-      <div className={styles.cardsGrid}>
-        {state.enemyCards.map(card => (
+    <div className="cardsContainer">
+      <div className="field-header">
+        <h3>Карты противника</h3>
+        {battleMode === 'auto' && (
+          <div className="auto-mode-indicator">🤖 Автоматический режим</div>
+        )}
+      </div>
+      
+      <div className="cardsGrid">
+        {enemyCards.map(card => (
           <Card
             key={card.id}
             card={card}
             type="enemy"
-            isSelected={state.selectedEnemyCard?.id === card.id}
+            isSelected={selectedEnemyCard?.id === card.id}
             isDefeated={card.health <= 0}
             onClick={handleCardSelect}
+            battleMode={battleMode}
           />
         ))}
       </div>

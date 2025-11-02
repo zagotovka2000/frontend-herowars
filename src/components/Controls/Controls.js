@@ -1,30 +1,51 @@
 import React from 'react';
-import { useGameState } from '../../hooks/useGameState';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { setBattleMode, resetGame } from '../../store/slices/gameSlice';
 import { useBattle } from '../../hooks/useBattle';
-import styles from './Controls.module.css';
+import './Controls.css';
 
 const Controls = () => {
-  const { state } = useGameState();
-  const { performAttack, resetGame } = useBattle();
+  const dispatch = useAppDispatch();
+  const { battleMode, selectedPlayerCard, selectedEnemyCard, isPlayerTurn } = useAppSelector(state => state.game);
+  const { performAttack } = useBattle();
 
-  const canAttack = state.isPlayerTurn && 
-                   state.selectedPlayerCard && 
-                   state.selectedEnemyCard;
+  const handleAttack = () => {
+    performAttack();
+  };
+
+  const handleModeToggle = () => {
+    const newMode = battleMode === 'manual' ? 'auto' : 'manual';
+    dispatch(setBattleMode(newMode));
+  };
+
+  const handleReset = () => {
+    dispatch(resetGame());
+  };
+
+  const canAttack = selectedPlayerCard && selectedEnemyCard && isPlayerTurn && battleMode === 'manual';
 
   return (
-    <div className={styles.controls}>
+    <div className='controls'>
       <button 
-        className={styles.attackButton}
-        onClick={performAttack}
+        className='attackButton'
+        onClick={handleAttack}
         disabled={!canAttack}
       >
         Атаковать!
       </button>
+      
       <button 
-        className={styles.resetButton}
-        onClick={resetGame}
+        className='resetButton'
+        onClick={handleReset}
       >
         Новая игра
+      </button>
+
+      <button 
+        className={`mode-toggle ${battleMode}`}
+        onClick={handleModeToggle}
+      >
+        {battleMode === 'manual' ? '⚔️ Ручной' : '🤖 Авто'}
       </button>
     </div>
   );

@@ -1,12 +1,13 @@
-// components/Campaign/Campaign.js
 import React from 'react';
-import { useApp } from '../../contex/AppContext';
-import './Campaign.module.css';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { useEnergy, addGold, addExperience } from '../../store/slices/appSlice';
 import BackButton from '../Common/BackButton';
 import ResourceBar from '../Common/ResourceBar';
+import './Campaign.css';
 
 const Campaign = () => {
-  const { state, dispatch } = useApp();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector(state => state.app.user);
 
   const campaignLevels = [
     { id: 1, name: 'Лесной путь', cost: 6, rewards: { gold: 50, exp: 25, items: ['Малое зелье'] } },
@@ -15,22 +16,17 @@ const Campaign = () => {
   ];
 
   const handleStartCampaign = (level) => {
-    if (state.user.energy >= level.cost) {
-      // Отправляем запрос на сервер
-      dispatch({ 
-        type: 'UPDATE_RESOURCES', 
-        payload: { 
-          energy: state.user.energy - level.cost,
-          gold: state.user.gold + level.rewards.gold
-        }
-      });
-      // Логика получения опыта и предметов
+    if (user.energy >= level.cost) {
+      dispatch(useEnergy(level.cost));
+      dispatch(addGold(level.rewards.gold));
+      dispatch(addExperience(level.rewards.exp));
+      // Здесь можно добавить логику для добавления предметов
     }
   };
 
   return (
     <div className="campaign-screen">
-       <BackButton />
+      <BackButton />
       <ResourceBar />
       <h2>Кампания</h2>
       <div className="campaign-levels">
@@ -43,9 +39,9 @@ const Campaign = () => {
               <span>📚 {level.rewards.exp} опыта</span>
             </div>
             <button 
-              className={`start-button ${state.user.energy < level.cost ? 'disabled' : ''}`}
+              className={`start-button ${user.energy < level.cost ? 'disabled' : ''}`}
               onClick={() => handleStartCampaign(level)}
-              disabled={state.user.energy < level.cost}
+              disabled={user.energy < level.cost}
             >
               Начать
             </button>

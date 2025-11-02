@@ -3,29 +3,35 @@ import PlayerField from '../PlayerField/PlayerField';
 import EnemyField from '../EnemyField/EnemyField';
 import GameInfo from '../GameInfo/GameInfo';
 import Controls from '../Controls/Controls';
-import GameOver from '../GameOver/GameOver';
-import { useGameState } from '../../hooks/useGameState';
-import styles from './GameBoard.module.css';
+import { useAppSelector } from '../../store/hooks';
+import './GameBoard.css';
+import { useBattle } from '../../hooks/useBattle';
+import BattleResultModal from '../Common/BattleResultModal';
 
-const GameBoard = () => {
-  const { state } = useGameState();
-
-  const isGameOver = state.playerHealth <= 0 || state.enemyHealth <= 0;
-
-  if (isGameOver) {
-    return <GameOver isWin={state.enemyHealth <= 0} />;
-  }
-
+const GameBoard = ({ onScreenChange }) => {
+  const gameState = useAppSelector(state => state.game);
+  const { 
+    performAttack, 
+    closeBattleResultModal 
+  } = useBattle();
+ 
   return (
-    <div className={styles.gameContainer}>
+    <div className='gameContainer'>
       <EnemyField />
       
-      <div className={styles.infoContainer}>
+      <div className='infoContainer'>
         <GameInfo />
         <Controls />
       </div>
       
       <PlayerField />
+      
+      <BattleResultModal 
+        isOpen={gameState.showBattleResultModal}
+        onClose={closeBattleResultModal}
+        isVictory={gameState.battleResult === 'victory'}
+        onScreenChange={onScreenChange}
+      />
     </div>
   );
 };
