@@ -8,12 +8,14 @@ const Card = ({
   isSelected, 
   isDefeated,
   onClick,
-  battleMode
+  battleMode,
+  frameType = 'default'
 }) => {
   const gameState = useAppSelector(state => state.game);
   
   const isAttacking = gameState.attackingCardId === card.id;
   const isDefending = gameState.defendingCardId === card.id;
+  const isSuperAttackReady = card.superAttack >= 100;
 
   const handleClick = () => {
     if (onClick && !isDefeated && card.health > 0) {
@@ -21,40 +23,70 @@ const Card = ({
     }
   };
 
-  const cardClasses = [
-    'card',
+  const wrapperClasses = [
+    'card-wrapper',
     type,
+    `frame-${frameType}`,
     isSelected ? 'selected' : '',
     isAttacking ? 'attacking' : '',
     isDefending ? 'defending' : '',
     isDefeated ? 'defeated' : '',
-    battleMode === 'auto' ? 'auto-mode' : ''
+    battleMode === 'auto' ? 'auto-mode' : '',
+    isSuperAttackReady ? 'super-attack-ready' : ''
   ].filter(Boolean).join(' ');
 
   return (
-    <div className={cardClasses} onClick={handleClick}>
-      <div className="card-value">⚔️ {card.value}</div>
-      
-      <div className="card-health">❤️ {card.health}/{card.maxHealth}</div>
-      
-      {card.health < card.maxHealth && card.health > 0 && (
-        <div className="health-bar">
-          <div 
-            className="health-fill" 
-            style={{ 
-              width: `${(card.health / card.maxHealth) * 100}%` 
-            }} 
-          />
+    <div className={wrapperClasses} onClick={handleClick}>
+      {/* Полоска здоровья сверху */}
+      {card.health > 0 && (
+        <div className="health-bar-container">
+          <div className="health-bar">
+            <div 
+              className="health-fill" 
+              style={{ 
+                width: `${(card.health / card.maxHealth) * 100}%` 
+              }} 
+            />
+          </div>
         </div>
       )}
       
-      {card.health <= 0 && (
-        <div className="dead-overlay">💀</div>
+      {/* Полоска супер удара снизу */}
+      {card.health > 0 && (
+        <div className="super-attack-bar-container">
+          <div className="super-attack-bar">
+            <div 
+              className="super-attack-fill" 
+              style={{ 
+                width: `${card.superAttack}%` 
+              }} 
+            />
+          </div>
+        </div>
       )}
       
-      {battleMode === 'auto' && (
-        <div className="auto-badge">🤖</div>
-      )}
+      {/* Рамка как внешний элемент */}
+      <div className="card-frame"></div>
+      
+      {/* Основная карточка */}
+      <div className="card">
+        <div className="card-content">
+          <div className="card-value">
+            ⚔️ {card.value}
+            {isSuperAttackReady && <span style={{color: 'gold', marginLeft: '5px'}}>✨</span>}
+          </div>
+          
+          <div className="card-health">❤️ {card.health}/{card.maxHealth}</div>
+          
+          {card.health <= 0 && (
+            <div className="dead-overlay">💀</div>
+          )}
+          
+          {battleMode === 'auto' && (
+            <div className="auto-badge">🤖</div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

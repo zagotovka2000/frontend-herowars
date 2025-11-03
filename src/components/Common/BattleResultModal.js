@@ -1,17 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAppDispatch } from '../../store/hooks';
-import { resetToMain } from '../../store/slices/navigationSlice';
+import { hideBattleResultModal } from '../../store/slices/gameSlice';
 import './BattleResultModal.css';
 
-const BattleResultModal = ({ isOpen, onClose, isVictory, onScreenChange }) => {
+const BattleResultModal = ({ 
+  isOpen, 
+  onClose, 
+  isVictory, 
+  onBattleComplete,
+  showContinueButton = true 
+}) => {
   const dispatch = useAppDispatch();
 
+  useEffect(() => {
+    if (isOpen && onBattleComplete) {
+      onBattleComplete(isVictory);
+    }
+  }, [isOpen, isVictory, onBattleComplete]);
+
   const handleClose = () => {
-    onClose();
-    setTimeout(() => {
-      // Используем Redux для навигации
-      dispatch(resetToMain());
-    }, 300);
+    dispatch(hideBattleResultModal());
+    if (onClose) onClose();
   };
 
   if (!isOpen) return null;
@@ -19,13 +28,13 @@ const BattleResultModal = ({ isOpen, onClose, isVictory, onScreenChange }) => {
   const resultData = {
     victory: {
       title: '🎉 Победа!',
-      message: 'Вы одержали победу над противником!',
+      message: 'Вы успешно прошли уровень!',
       color: '#4CAF50',
       icon: '🏆'
     },
     defeat: {
       title: '💀 Поражение',
-      message: 'Противник оказался сильнее...',
+      message: 'Попробуйте еще раз!',
       color: '#F44336',
       icon: '☠️'
     }
@@ -35,7 +44,7 @@ const BattleResultModal = ({ isOpen, onClose, isVictory, onScreenChange }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ borderColor: data.color }}>
+      <div className="modal-content campaign-result" style={{ borderColor: data.color }}>
         
         <button className="modal-close-button" onClick={handleClose}>
           ✕
@@ -53,24 +62,24 @@ const BattleResultModal = ({ isOpen, onClose, isVictory, onScreenChange }) => {
           {data.message}
         </p>
         
-        <div className="result-details">
-          <div className="detail-item">
-            <span className="detail-label">Режим:</span>
-            <span className="detail-value">ПвП Арена</span>
+        {isVictory && (
+          <div className="campaign-rewards">
+            <h3>Уровень пройден!</h3>
+            <div className="rewards-tip">
+              Следующий уровень теперь доступен
+            </div>
           </div>
-          <div className="detail-item">
-            <span className="detail-label">Тип боя:</span>
-            <span className="detail-value">5×5 карточный</span>
-          </div>
-        </div>
+        )}
         
-        <button 
-          className="confirm-button" 
-          onClick={handleClose}
-          style={{ backgroundColor: data.color }}
-        >
-          На главную
-        </button>
+        {showContinueButton && (
+          <button 
+            className="confirm-button" 
+            onClick={handleClose}
+            style={{ backgroundColor: data.color }}
+          >
+            Продолжить
+          </button>
+        )}
       </div>
     </div>
   );

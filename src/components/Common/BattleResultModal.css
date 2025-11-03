@@ -1,64 +1,39 @@
-/* ★★★ ОСНОВНОЙ ФОН МОДАЛЬНОГО ОКНА (ПОЛУПРОЗРАЧНЫЙ ЧЕРНЫЙ) ★★★ */
-.modal-overlay {
-   position: fixed;
-   top: 0;
-   left: 0;
-   right: 0;
-   bottom: 0;
-   background-color: rgba(0, 0, 0, 0.7);
-   display: flex;
-   justify-content: center;
-   align-items: center;
-   z-index: 1000;
-   animation: fadeIn 0.3s ease-in-out;
+.campaign-result {
+   max-width: 400px;
  }
  
- /* ★★★ САМО МОДАЛЬНОЕ ОКНО ★★★ */
- .modal-content {
-   background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-   padding: 30px;
-   border-radius: 20px;
-   border: 3px solid;
-   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-   max-width: 400px;
-   width: 90%;
-   position: relative;
-   animation: slideIn 0.3s ease-out;
-   color: white;
+ .campaign-rewards {
+   margin: 20px 0;
+   padding: 15px;
+   background: rgba(255, 255, 255, 0.1);
+   border-radius: 10px;
+ }
+ 
+ .campaign-rewards h3 {
+   margin: 0 0 10px 0;
+   color: gold;
    text-align: center;
  }
  
- /* ★★★ АНИМАЦИЯ ПОЯВЛЕНИЯ ★★★ */
- @keyframes fadeIn {
-   from { opacity: 0; }
-   to { opacity: 1; }
+ .rewards-tip {
+   color: #90EE90;
+   text-align: center;
+   font-style: italic;
+   font-size: 0.9em;
  }
  
- @keyframes slideIn {
-   from { 
-     transform: translateY(-50px) scale(0.9);
-     opacity: 0;
-   }
-   to { 
-     transform: translateY(0) scale(1);
-     opacity: 1;
-   }
- }
- 
- /* ★★★ КНОПКА ЗАКРЫТИЯ (КРАСНЫЙ КРЕСТИК) ★★★ */
  .modal-close-button {
    position: absolute;
-   top: 15px;
-   right: 15px;
-   background: #F44336;
+   top: 10px;
+   right: 10px;
+   background: #FF6B6B;
    border: none;
-   color: white;
+   border-radius: 50%;
    width: 30px;
    height: 30px;
-   border-radius: 50%;
+   color: white;
+   font-size: 1.2em;
    cursor: pointer;
-   font-size: 16px;
-   font-weight: bold;
    display: flex;
    align-items: center;
    justify-content: center;
@@ -66,86 +41,140 @@
  }
  
  .modal-close-button:hover {
-   background: #D32F2F;
+   background: #FF5252;
    transform: scale(1.1);
  }
  
- /* ★★★ ИКОНКА РЕЗУЛЬТАТА ★★★ */
+ /* Остальные стили остаются прежними */
+ .modal-overlay {
+   position: fixed;
+   top: 0;
+   left: 0;
+   right: 0;
+   bottom: 0;
+   background: rgba(0, 0, 0, 0.8);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   z-index: 1000;
+ }
+ 
+ .modal-content {
+   background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+   padding: 30px;
+   border-radius: 15px;
+   border: 3px solid;
+   position: relative;
+   max-width: 500px;
+   width: 90%;
+   text-align: center;
+   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+ }
+ 
  .result-icon {
-   font-size: 60px;
-   margin-bottom: 15px;
-   animation: bounce 0.5s ease-in-out;
- }
- 
- @keyframes bounce {
-   0%, 20%, 50%, 80%, 100% {
-     transform: translateY(0);
-   }
-   40% {
-     transform: translateY(-10px);
-   }
-   60% {
-     transform: translateY(-5px);
-   }
- }
- 
- /* ★★★ ЗАГОЛОВОК ★★★ */
- .result-title {
-   font-size: 28px;
-   margin-bottom: 15px;
-   font-weight: bold;
-   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
- }
- 
- /* ★★★ СООБЩЕНИЕ ★★★ */
- .result-message {
-   font-size: 16px;
+   font-size: 4em;
    margin-bottom: 20px;
-   line-height: 1.5;
-   opacity: 0.9;
+   animation: celebrate 0.6s ease-in-out;
  }
  
- /* ★★★ ДЕТАЛИ РЕЗУЛЬТАТА ★★★ */
+ .result-title {
+   margin: 0 0 15px 0;
+   font-size: 2em;
+ }
+ 
+ .result-message {
+   color: white;
+   font-size: 1.2em;
+   margin-bottom: 20px;
+   line-height: 1.4;
+ }
+ 
  .result-details {
    background: rgba(255, 255, 255, 0.1);
    border-radius: 10px;
    padding: 15px;
-   margin-bottom: 20px;
+   margin: 20px 0;
  }
  
  .detail-item {
    display: flex;
    justify-content: space-between;
-   margin-bottom: 8px;
- }
- 
- .detail-item:last-child {
-   margin-bottom: 0;
+   align-items: center;
+   margin: 8px 0;
+   color: white;
  }
  
  .detail-label {
-   opacity: 0.7;
+   opacity: 0.8;
  }
  
  .detail-value {
    font-weight: bold;
  }
  
- /* ★★★ КНОПКА ПОДТВЕРЖДЕНИЯ ★★★ */
  .confirm-button {
    background: #4CAF50;
    color: white;
    border: none;
    padding: 12px 30px;
    border-radius: 25px;
-   font-size: 16px;
-   font-weight: bold;
+   font-size: 1.1em;
    cursor: pointer;
    transition: all 0.3s ease;
-   width: 100%;
+   margin-top: 15px;
  }
  
  .confirm-button:hover {
-   transform: translateY(-2px);
+   transform: scale(1.05);
    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+ }
+ 
+ @keyframes celebrate {
+   0% { transform: scale(0.5); opacity: 0; }
+   70% { transform: scale(1.2); }
+   100% { transform: scale(1); opacity: 1; }
+ }
+
+
+ /* компания */
+ .campaign-result {
+   max-width: 400px;
+ }
+ 
+ .campaign-rewards {
+   margin: 20px 0;
+   padding: 15px;
+   background: rgba(255, 255, 255, 0.1);
+   border-radius: 10px;
+ }
+ 
+ .campaign-rewards h3 {
+   margin: 0 0 15px 0;
+   color: gold;
+   text-align: center;
+ }
+ 
+ .rewards-list {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+ }
+ 
+ .reward-item {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   gap: 10px;
+   padding: 8px;
+   background: rgba(255, 215, 0, 0.2);
+   border-radius: 5px;
+ }
+ 
+ .reward-icon {
+   font-size: 1.2em;
+ }
+ 
+ .reward-value {
+   color: white;
+   font-weight: bold;
  }

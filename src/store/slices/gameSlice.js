@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 
 const config = {
   playerHealth: 100,
@@ -18,6 +18,8 @@ const generateCards = (count, isPlayer = true) => {
       value: Math.floor(Math.random() * (config.maxCardValue - config.minCardValue + 1)) + config.minCardValue,
       health: 10,
       maxHealth: 10,
+      superAttack: 0, // Добавляем шкалу супер удара
+      hasUsedSuperAttack: false, // Отслеживаем использовался ли супер удар
       isPlayer: isPlayer
     });
   }
@@ -147,7 +149,6 @@ export const gameSlice = createSlice({
     hideBattleResultModal: (state) => {
       state.showBattleResultModal = false;
       state.battleResult = null;
-      // Сбрасываем состояние боя
       state.playerCards = [];
       state.enemyCards = [];
       state.selectedPlayerCard = null;
@@ -155,6 +156,36 @@ export const gameSlice = createSlice({
       state.isPlayerTurn = true;
       state.attackingCardId = null;
       state.defendingCardId = null;
+    },
+
+    // ★★★ НОВЫЕ ЭКШЕНЫ ДЛЯ СУПЕР УДАРА ★★★
+    updateSuperAttack: (state, action) => {
+      const { cardId, newSuperAttack, isPlayerCard } = action.payload;
+      const cardArray = isPlayerCard ? 'playerCards' : 'enemyCards';
+      const card = state[cardArray].find(card => card.id === cardId);
+      if (card) {
+        card.superAttack = Math.min(100, Math.max(0, newSuperAttack));
+      }
+    },
+
+    useSuperAttack: (state, action) => {
+      const { cardId, isPlayerCard } = action.payload;
+      const cardArray = isPlayerCard ? 'playerCards' : 'enemyCards';
+      const card = state[cardArray].find(card => card.id === cardId);
+      if (card) {
+        card.superAttack = 0;
+        card.hasUsedSuperAttack = true;
+      }
+    },
+
+    resetSuperAttack: (state, action) => {
+      const { cardId, isPlayerCard } = action.payload;
+      const cardArray = isPlayerCard ? 'playerCards' : 'enemyCards';
+      const card = state[cardArray].find(card => card.id === cardId);
+      if (card) {
+        card.superAttack = 0;
+        card.hasUsedSuperAttack = false;
+      }
     }
   },
 });
@@ -174,7 +205,10 @@ export const {
   clearAnimation,
   setBattleMode,
   showBattleResultModal,
-  hideBattleResultModal
+  hideBattleResultModal,
+  updateSuperAttack,
+  useSuperAttack,
+  resetSuperAttack
 } = gameSlice.actions;
 
 export default gameSlice.reducer;
