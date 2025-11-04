@@ -6,7 +6,7 @@ import './MainMap.css';
 
 const MainMap = () => {
   const dispatch = useAppDispatch();
-  const user = useAppSelector(state => state.app.user);
+  const user = useAppSelector(state => state.api.user);
   const guild = useAppSelector(state => state.app.guild);
 
   const gameModes = [

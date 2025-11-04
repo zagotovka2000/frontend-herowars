@@ -1,50 +1,46 @@
+// src/components/Arena/Arena.js
 import React, { useEffect, useState } from 'react';
-import { useAppDispatch } from '../../store/hooks';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { navigateBack } from '../../store/slices/navigationSlice';
 import { initGame } from '../../store/slices/gameSlice';
 import GameBoard from '../GameBoard/GameBoard';
-import BackButton from '../Common/BackButton';
-import ResourceBar from '../Common/ResourceBar';
+import Controls from '../Controls/Controls';
 import './Arena.css';
 
-const Arena = ({ onScreenChange }) => {
+const Arena = () => {
   const dispatch = useAppDispatch();
-  const [battleStarted, setBattleStarted] = useState(false);
+  const [battleInitialized, setBattleInitialized] = useState(false);
 
   useEffect(() => {
-    // Инициализируем игру при входе в арену
-    dispatch(initGame());
-    
-    const timer = setTimeout(() => {
-      setBattleStarted(true);
-    }, 1000);
+    // ✅ Инициализируем битву только один раз
+    if (!battleInitialized) {
+      console.log('🎮 Инициализация арены...');
+      dispatch(initGame());
+      setBattleInitialized(true);
+    }
+  }, [dispatch, battleInitialized]);
 
-    return () => clearTimeout(timer);
-  }, [dispatch]);
-
-  if (!battleStarted) {
-    return (
-      <div className="arena-screen">
-        <BackButton />
-        <ResourceBar />
-        <div className="arena-loading">
-          <div className="loading-spinner">⚔️</div>
-          <p>Поиск противника...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleExit = () => {
+    console.log('🎮 Выход из арены');
+    dispatch(navigateBack());
+  };
 
   return (
-    <div className="arena-screen">
-      <BackButton />
-      <ResourceBar />
+    <div className="arena">
+      <div className="arena-header">
+        <button className="back-button" onClick={handleExit}>
+          ← Назад
+        </button>
+        <h1>⚔️ Арена</h1>
+        <div className="battle-info">
+          <span>Режим: PvP</span>
+          <span>Ход: Игрока</span>
+        </div>
+      </div>
       
       <div className="arena-content">
-        <div className="arena-header">
-          <h2>⚔️ ПвП Арена</h2>
-          <p>Сразитесь с противником в эпической битве 5x5!</p>
-        </div>
-        <GameBoard onScreenChange={onScreenChange} />
+        <GameBoard />
+        <Controls />
       </div>
     </div>
   );

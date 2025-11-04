@@ -1,28 +1,21 @@
+// src/store/slices/appSlice.js
 import { createSlice } from '@reduxjs/toolkit';
+import { fetchUser, fetchUserCards, updateUser } from './apiSlice';
 
+// Начальное состояние теперь будет загружаться с сервера
 const initialState = {
-  user: {
-    level: 1,
-    experience: 0,
-    energy: 100,
-    maxEnergy: 100,
-    gold: 1000,
-    gems: 50,
-    power: 0
-  },
-  cards: [
-    { id: 1, name: 'Воин', level: 1, power: 50, health: 100, rarity: 'common' },
-    { id: 2, name: 'Лучник', level: 1, power: 45, health: 80, rarity: 'common' },
-    { id: 3, name: 'Маг', level: 2, power: 70, health: 60, rarity: 'rare' }
-  ],
+
+  cards: [],
   campaigns: [],
-  quests: [
-    { id: 1, title: 'Пройдите 3 кампании', reward: { gold: 100, exp: 50 }, completed: false },
-    { id: 2, title: 'Выиграйте 1 битву на арене', reward: { gold: 200, exp: 100 }, completed: false }
-  ],
+  quests: [],
   expeditions: [],
   dailyRewards: [],
-  guild: null,
+  guild: {
+   id: '1',
+   name: 'Гильдия Героев',
+   rank: 15,
+   members: 24
+ },
   inventory: {
     potions: 0,
     scrolls: 0,
@@ -34,15 +27,18 @@ export const appSlice = createSlice({
   name: 'app',
   initialState,
   reducers: {
-    updateResources: (state, action) => {
-      state.user = { ...state.user, ...action.payload };
+    // Локальные экшены для мгновенного обновления UI
+    updateLocalResources: (state, action) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+      }
     },
     
-    addCard: (state, action) => {
+    addLocalCard: (state, action) => {
       state.cards.push(action.payload);
     },
     
-    updateCard: (state, action) => {
+    updateLocalCard: (state, action) => {
       const { id, updates } = action.payload;
       const cardIndex = state.cards.findIndex(card => card.id === id);
       if (cardIndex !== -1) {
@@ -50,11 +46,11 @@ export const appSlice = createSlice({
       }
     },
     
-    startExpedition: (state, action) => {
+    startLocalExpedition: (state, action) => {
       state.expeditions.push(action.payload);
     },
     
-    completeQuest: (state, action) => {
+    completeLocalQuest: (state, action) => {
       const questId = action.payload;
       const quest = state.quests.find(q => q.id === questId);
       if (quest) {
@@ -62,36 +58,72 @@ export const appSlice = createSlice({
       }
     },
     
-    // Новые экшены для ресурсов
+    // Экшены для ресурсов (синхронизируются с сервером)
     addGold: (state, action) => {
-      state.user.gold += action.payload;
+      if (state.user) {
+        state.user.gold += action.payload;
+      }
     },
     
     addGems: (state, action) => {
-      state.user.gems += action.payload;
+      if (state.user) {
+        state.user.gems += action.payload;
+      }
     },
     
     addExperience: (state, action) => {
-      state.user.experience += action.payload;
-      // Логика повышения уровня может быть добавлена здесь
+      if (state.user) {
+        state.user.experience += action.payload;
+        // Логика повышения уровня может быть добавлена здесь
+      }
     },
     
     useEnergy: (state, action) => {
-      state.user.energy = Math.max(0, state.user.energy - action.payload);
+      if (state.user) {
+        state.user.energy = Math.max(0, state.user.energy - action.payload);
+      }
+    },
+
+    // Установка данных с сервера
+    setUserData: (state, action) => {
+      state.user = action.payload;
+    },
+
+    setCardsData: (state, action) => {
+      state.cards = action.payload;
+    },
+
+    setCampaignsData: (state, action) => {
+      state.campaigns = action.payload;
     }
   },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchUser.fulfilled, (state, action) => {
+        state.user = action.payload;
+      })
+      .addCase(fetchUserCards.fulfilled, (state, action) => {
+        state.cards = action.payload;
+      })
+      .addCase(updateUser.fulfilled, (state, action) => {
+        state.user = { ...state.user, ...action.payload };
+      });
+  }
 });
 
 export const {
-  updateResources,
-  addCard,
-  updateCard,
-  startExpedition,
-  completeQuest,
+  updateLocalResources,
+  addLocalCard,
+  updateLocalCard,
+  startLocalExpedition,
+  completeLocalQuest,
   addGold,
   addGems,
   addExperience,
-  useEnergy
+  useEnergy,
+  setUserData,
+  setCardsData,
+  setCampaignsData
 } = appSlice.actions;
 
 export default appSlice.reducer;

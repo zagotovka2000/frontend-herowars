@@ -1,0 +1,258 @@
+.loading-state {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   justify-content: center;
+   padding: 60px 20px;
+   text-align: center;
+   background: rgba(255, 255, 255, 0.9);
+   border-radius: 20px;
+   margin: 20px 0;
+   position: relative;
+   overflow: hidden;
+ }
+ 
+ .loading-state::before {
+   content: '';
+   position: absolute;
+   top: 0;
+   left: -100%;
+   width: 100%;
+   height: 4px;
+   background: linear-gradient(90deg, transparent, #667eea, #764ba2, transparent);
+   animation: loadingBar 2s linear infinite;
+ }
+ 
+ .loading-spinner {
+   font-size: 4rem;
+   margin-bottom: 25px;
+   animation: spin 1.5s linear infinite;
+   filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+   position: relative;
+ }
+ 
+ .loading-spinner::after {
+   content: '';
+   position: absolute;
+   top: -10px;
+   left: -10px;
+   right: -10px;
+   bottom: -10px;
+   border-radius: 50%;
+   background: conic-gradient(from 0deg, #667eea, #764ba2, #667eea);
+   z-index: -1;
+   animation: spin 3s linear infinite reverse;
+   opacity: 0.1;
+ }
+ 
+ .loading-message {
+   font-size: 1.4rem;
+   color: #4a5568;
+   margin: 0;
+   font-weight: 600;
+   position: relative;
+ }
+ 
+ .loading-message::after {
+   content: '...';
+   animation: dots 1.5s steps(4, end) infinite;
+ }
+ 
+ /* Анимации */
+ @keyframes spin {
+   0% {
+     transform: rotate(0deg);
+   }
+   100% {
+     transform: rotate(360deg);
+   }
+ }
+ 
+ @keyframes dots {
+   0%, 20% {
+     color: transparent;
+     text-shadow: 0.25em 0 0 transparent, 0.5em 0 0 transparent;
+   }
+   40% {
+     color: #4a5568;
+     text-shadow: 0.25em 0 0 transparent, 0.5em 0 0 transparent;
+   }
+   60% {
+     text-shadow: 0.25em 0 0 #4a5568, 0.5em 0 0 transparent;
+   }
+   80%, 100% {
+     text-shadow: 0.25em 0 0 #4a5568, 0.5em 0 0 #4a5568;
+   }
+ }
+ 
+ @keyframes loadingBar {
+   0% {
+     left: -100%;
+   }
+   100% {
+     left: 100%;
+   }
+ }
+ 
+ /* Варианты загрузки */
+ .loading-state.small {
+   padding: 30px 15px;
+ }
+ 
+ .loading-state.small .loading-spinner {
+   font-size: 2rem;
+   margin-bottom: 15px;
+ }
+ 
+ .loading-state.small .loading-message {
+   font-size: 1rem;
+ }
+ 
+ .loading-state.large {
+   padding: 80px 30px;
+ }
+ 
+ .loading-state.large .loading-spinner {
+   font-size: 6rem;
+   margin-bottom: 35px;
+ }
+ 
+ .loading-state.large .loading-message {
+   font-size: 1.8rem;
+ }
+ 
+ .loading-state.inline {
+   flex-direction: row;
+   gap: 15px;
+   padding: 20px;
+   border-radius: 12px;
+ }
+ 
+ .loading-state.inline .loading-spinner {
+   font-size: 2rem;
+   margin-bottom: 0;
+ }
+ 
+ .loading-state.inline .loading-message {
+   font-size: 1.1rem;
+ }
+ 
+ /* Цветовые варианты */
+ .loading-state.primary::before {
+   background: linear-gradient(90deg, transparent, #667eea, #764ba2, transparent);
+ }
+ 
+ .loading-state.success::before {
+   background: linear-gradient(90deg, transparent, #48bb78, #38a169, transparent);
+ }
+ 
+ .loading-state.warning::before {
+   background: linear-gradient(90deg, transparent, #ed8936, #dd6b20, transparent);
+ }
+ 
+ .loading-state.danger::before {
+   background: linear-gradient(90deg, transparent, #f56565, #e53e3e, transparent);
+ }
+ 
+ /* Адаптивность */
+ @media (max-width: 768px) {
+   .loading-state {
+     padding: 40px 15px;
+   }
+   
+   .loading-spinner {
+     font-size: 3rem;
+     margin-bottom: 20px;
+   }
+   
+   .loading-message {
+     font-size: 1.2rem;
+   }
+   
+   .loading-state.large {
+     padding: 50px 20px;
+   }
+   
+   .loading-state.large .loading-spinner {
+     font-size: 4rem;
+     margin-bottom: 25px;
+   }
+   
+   .loading-state.large .loading-message {
+     font-size: 1.4rem;
+   }
+ }
+ 
+ @media (max-width: 480px) {
+   .loading-state {
+     padding: 30px 10px;
+   }
+   
+   .loading-spinner {
+     font-size: 2.5rem;
+   }
+   
+   .loading-message {
+     font-size: 1.1rem;
+   }
+ }
+ 
+ /* Дополнительные эффекты */
+ .loading-state.pulse {
+   animation: loadingPulse 2s ease-in-out infinite;
+ }
+ 
+ @keyframes loadingPulse {
+   0%, 100% {
+     transform: scale(1);
+   }
+   50% {
+     transform: scale(1.02);
+   }
+ }
+ 
+ .loading-state.glass {
+   background: rgba(255, 255, 255, 0.25);
+   backdrop-filter: blur(10px);
+   border: 1px solid rgba(255, 255, 255, 0.3);
+ }
+ 
+ /* Прогресс бар для загрузки с прогрессом */
+ .loading-progress {
+   width: 100%;
+   max-width: 300px;
+   height: 8px;
+   background: #e2e8f0;
+   border-radius: 4px;
+   margin-top: 20px;
+   overflow: hidden;
+   position: relative;
+ }
+ 
+ .loading-progress-bar {
+   height: 100%;
+   background: linear-gradient(90deg, #667eea, #764ba2);
+   border-radius: 4px;
+   transition: width 0.3s ease;
+   position: relative;
+ }
+ 
+ .loading-progress-bar::after {
+   content: '';
+   position: absolute;
+   top: 0;
+   left: -100%;
+   width: 100%;
+   height: 100%;
+   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+   animation: progressShine 2s infinite;
+ }
+ 
+ @keyframes progressShine {
+   0% {
+     left: -100%;
+   }
+   100% {
+     left: 100%;
+   }
+ }

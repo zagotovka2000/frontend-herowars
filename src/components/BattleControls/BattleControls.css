@@ -1,0 +1,108 @@
+/* src/components/BattleControls/BattleControls.css */
+.battle-controls {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+   padding: 15px;
+   background: rgba(0, 0, 0, 0.7);
+   border-radius: 10px;
+   margin-top: 20px;
+ }
+ 
+ .controls-row {
+   display: flex;
+   gap: 10px;
+   justify-content: center;
+ }
+ 
+ .control-button {
+   padding: 12px 20px;
+   border: none;
+   border-radius: 8px;
+   font-size: 14px;
+   font-weight: bold;
+   cursor: pointer;
+   transition: all 0.3s ease;
+   min-width: 140px;
+ }
+ 
+ .control-button:disabled {
+   opacity: 0.5;
+   cursor: not-allowed;
+ }
+ 
+ .attack-button {
+   background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+   color: white;
+ }
+ 
+ .attack-button:not(:disabled):hover {
+   background: linear-gradient(45deg, #ff5252, #e84118);
+   transform: translateY(-2px);
+ }
+ 
+ .super-attack-button {
+   background: linear-gradient(45deg, #ff9ff3, #f368e0);
+   color: white;
+ }
+ 
+ .super-attack-button:not(:disabled):hover {
+   background: linear-gradient(45deg, #fd79a8, #e84393);
+   transform: translateY(-2px);
+ }
+ 
+ .mode-button {
+   background: linear-gradient(45deg, #00cec9, #00b894);
+   color: white;
+ }
+ 
+ .mode-button.auto {
+   background: linear-gradient(45deg, #ff7675, #e17055);
+ }
+ 
+ .mode-button:not(:disabled):hover {
+   transform: translateY(-2px);
+ }
+ 
+ .reset-button {
+   background: linear-gradient(45deg, #636e72, #2d3436);
+   color: white;
+ }
+ 
+ .reset-button:hover {
+   background: linear-gradient(45deg, #2d3436, #636e72);
+   transform: translateY(-2px);
+ }
+ 
+ .turn-info {
+   text-align: center;
+   margin-top: 10px;
+   padding: 10px;
+   border-radius: 5px;
+   background: rgba(255, 255, 255, 0.1);
+ }
+ 
+ .turn-indicator {
+   font-weight: bold;
+   font-size: 16px;
+   margin-bottom: 5px;
+ }
+ 
+ .player-turn {
+   color: #74b9ff;
+ }
+ 
+ .enemy-turn {
+   color: #ff7675;
+ }
+ 
+ .mode-info {
+   font-size: 12px;
+   opacity: 0.8;
+ }
+ 
+ .mode-info.auto-active {
+   color: #00b894;
+   font-weight: bold;
+   opacity: 1;
+ }

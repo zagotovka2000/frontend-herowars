@@ -1,55 +1,40 @@
-import React from 'react';
-import { Provider } from 'react-redux';
-import { store } from './store';
-import MainMap from './components/MainMap/MainMap';
-import Campaign from './components/Campaign/Campaign';
-import Arena from './components/Arena/Arena';
-import Collection from './components/Collection/Collection';
-import Shop from './components/Shop/Shop';
-import Quests from './components/Quests/Quests';
-import GuildWar from './components/GuildWar/GuildWar';
-import DailyReward from './components/DailyReward/DailyReward';
-import FreeChest from './components/FreeChest/FreeChest';
-import Expedition from './components/Expedition/Expedition';
-import { useAppSelector } from './store/hooks';
-import { selectCurrentScreen } from './store/slices/navigationSlice';
+// src/App.js
+import React, { useEffect } from 'react';
+import AppContent from './AppContent';
+import { useApi } from './hooks/useApi';
 
-import './App.css';
+function AppInitializer() {
+  const { loadUser, loadCampaigns, user } = useApi();
 
-// Компонент-обертка для использования навигации
-function AppContent() {
-  const currentScreen = useAppSelector(selectCurrentScreen);
-  
-  const renderScreen = () => {
-    switch (currentScreen) {
-      case 'campaign': return <Campaign />;
-      case 'arena': return <Arena />;
-      case 'collection': return <Collection />;
-      case 'shop': return <Shop />;
-      case 'quests': return <Quests />;
-      case 'guild-war': return <GuildWar />;
-      case 'daily-reward': return <DailyReward />;
-      case 'expedition': return <Expedition />;
-      case 'free-chest': return <FreeChest />;
-      default: return <MainMap />;
-    }
-  };
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        const userId = '1';
+        await loadUser(userId);
+        await loadCampaigns();
+      } catch (error) {
+        console.error('Failed to initialize app:', error);
+      }
+    };
 
-  return (
-    <div className="app">
-      <main className="app-main">
-        {renderScreen()}
-      </main>
-    </div>
-  );
+    initializeApp();
+  }, [loadUser, loadCampaigns]);
+
+  if (!user) {
+    return (
+      <div className="app-loading">
+        <div className="loading-spinner">⚔️</div>
+        <p>Загрузка HeroWars...</p>
+      </div>
+    );
+  }
+
+  return <AppContent />;
 }
 
+// ✅ УБРАЛИ Provider - он уже в index.js
 function App() {
-  return (
-    <Provider store={store}>
-      <AppContent />
-    </Provider>
-  );
+  return <AppInitializer />;
 }
 
 export default App;

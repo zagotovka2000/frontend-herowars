@@ -40,7 +40,10 @@ const initialState = {
   isBattleActive: true,
   battleMode: 'manual',
   showBattleResultModal: false,
-  config: config
+  config: config,
+  serverBattleId: null, // ★★★ ДОБАВЛЕНО: ID битвы на сервере ★★★
+  turns: [], // ★★★ ДОБАВЛЕНО: история ходов ★★★
+  superAttackUsage: [] // ★★★ ДОБАВЛЕНО: использование супер атак ★★★
 };
 
 export const gameSlice = createSlice({
@@ -61,6 +64,9 @@ export const gameSlice = createSlice({
       state.showBattleResultModal = false;
       state.battleResult = null;
       state.isBattleActive = true;
+      state.serverBattleId = null; // ★★★ ДОБАВЛЕНО: сброс ID битвы ★★★
+      state.turns = []; // ★★★ ДОБАВЛЕНО: сброс истории ходов ★★★
+      state.superAttackUsage = []; // ★★★ ДОБАВЛЕНО: сброс использования супер атак ★★★
     },
 
     resetGame: (state) => {
@@ -77,6 +83,24 @@ export const gameSlice = createSlice({
       state.showBattleResultModal = false;
       state.battleResult = null;
       state.isBattleActive = true;
+      state.serverBattleId = null; // ★★★ ДОБАВЛЕНО: сброс ID битвы ★★★
+      state.turns = []; // ★★★ ДОБАВЛЕНО: сброс истории ходов ★★★
+      state.superAttackUsage = []; // ★★★ ДОБАВЛЕНО: сброс использования супер атак ★★★
+    },
+
+    // ★★★ ДОБАВЛЕНО: Установка ID битвы с сервера ★★★
+    setServerBattleId: (state, action) => {
+      state.serverBattleId = action.payload;
+    },
+
+    // ★★★ ДОБАВЛЕНО: Добавление хода в историю ★★★
+    addTurn: (state, action) => {
+      state.turns.push(action.payload);
+    },
+
+    // ★★★ ДОБАВЛЕНО: Запись использования супер атаки ★★★
+    recordSuperAttack: (state, action) => {
+      state.superAttackUsage.push(action.payload);
     },
 
     selectPlayerCard: (state, action) => {
@@ -156,6 +180,9 @@ export const gameSlice = createSlice({
       state.isPlayerTurn = true;
       state.attackingCardId = null;
       state.defendingCardId = null;
+      state.serverBattleId = null; // ★★★ ДОБАВЛЕНО: сброс ID битвы ★★★
+      state.turns = []; // ★★★ ДОБАВЛЕНО: сброс истории ходов ★★★
+      state.superAttackUsage = []; // ★★★ ДОБАВЛЕНО: сброс использования супер атак ★★★
     },
 
     // ★★★ НОВЫЕ ЭКШЕНЫ ДЛЯ СУПЕР УДАРА ★★★
@@ -175,6 +202,13 @@ export const gameSlice = createSlice({
       if (card) {
         card.superAttack = 0;
         card.hasUsedSuperAttack = true;
+        
+        // ★★★ ДОБАВЛЕНО: Записываем использование супер атаки ★★★
+        state.superAttackUsage.push({
+          cardId: cardId,
+          isPlayerCard: isPlayerCard,
+          timestamp: new Date().toISOString()
+        });
       }
     },
 
@@ -193,6 +227,9 @@ export const gameSlice = createSlice({
 export const {
   initGame,
   resetGame,
+  setServerBattleId, // ★★★ ДОБАВЛЕНО: экспорт нового экшена ★★★
+  addTurn, // ★★★ ДОБАВЛЕНО: экспорт нового экшена ★★★
+  recordSuperAttack, // ★★★ ДОБАВЛЕНО: экспорт нового экшена ★★★
   selectPlayerCard,
   selectEnemyCard,
   updateCardHealth,

@@ -1,87 +1,166 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { useEnergy } from '../../store/slices/appSlice';
-import { initGame } from '../../store/slices/gameSlice';
 import { navigateTo } from '../../store/slices/navigationSlice';
 import BackButton from '../Common/BackButton';
 import ResourceBar from '../Common/ResourceBar';
 import BattleResultModal from '../Common/BattleResultModal';
 import EnergyModal from '../Common/EnergyModal/EnergyModal';
 import './Campaign.css';
+import { useApi } from '../../hooks/useApi';
+import { useBattle } from '../../hooks/useBattle';
+import { useGameEvents } from '../../hooks/useGameEvents';
 
 const Campaign = () => {
   const dispatch = useAppDispatch();
-  const user = useAppSelector(state => state.app.user);
+  const { user } = useAppSelector(state => state.app);
   const { showBattleResultModal: showModal, battleResult } = useAppSelector(state => state.game);
   
-  const [completedLevels, setCompletedLevels] = useState([1]);
+  const { 
+    campaigns, 
+    campaignProgress, 
+    loadCampaigns, 
+    loadCampaignProgress,
+    loading: apiLoading 
+  } = useApi();
+  const { startCampaignBattle, completeCampaignBattle } = useBattle();
+  const { handleBattleComplete: handleGameEvent } = useGameEvents();
+
+  const [currentCampaign, setCurrentCampaign] = useState(null);
   const [currentLevel, setCurrentLevel] = useState(null);
   const [showEnergyModal, setShowEnergyModal] = useState(false);
-
-  const campaignLevels = [
-    { id: 1, name: 'Лесной путь', cost: 6, rewards: { gold: 50, exp: 25 } },
-    { id: 2, name: 'Горный перевал', cost: 8, rewards: { gold: 75, exp: 40 } },
-    { id: 3, name: 'Заброшенный замок', cost: 10, rewards: { gold: 100, exp: 60 } },
-    { id: 4, name: 'Драконье логово', cost: 12, rewards: { gold: 150, exp: 80 } },
-    { id: 5, name: 'Храм древних', cost: 15, rewards: { gold: 200, exp: 100 } },
-    { id: 6, name: 'Ледяные пещеры', cost: 18, rewards: { gold: 250, exp: 120 } },
-    { id: 7, name: 'Вулкан Огня', cost: 20, rewards: { gold: 300, exp: 150 } },
-    { id: 8, name: 'Небесный город', cost: 22, rewards: { gold: 350, exp: 180 } },
-    { id: 9, name: 'Подземная бездна', cost: 25, rewards: { gold: 400, exp: 200 } },
-    { id: 10, name: 'Тронный зал', cost: 30, rewards: { gold: 500, exp: 250 } }
-  ];
+  const [loading, setLoading] = useState(true);
 
   const levelImages = [
     '🎯', '⚔️', '🏹', '🐉', '🏛️',
     '❄️', '🔥', '☁️', '🌑', '👑'
   ];
 
-  const handleLevelClick = (level) => {
-    if (!isLevelAvailable(level.id)) {
-      return;
+  useEffect(() => {
+    if (user) {
+      initializeCampaign();
     }
+  }, [user]);
+
+  const initializeCampaign = async () => {
+    try {
+      setLoading(true);
+      await loadCampaigns(user.id);
+      await loadCampaignProgress(user.id);
+      
+      // Устанавливаем первую кампанию как текущую
+      if (campaigns.length > 0) {
+        setCurrentCampaign(campaigns[0]);
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки кампании:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Получаем completed levels из прогресса
+  const getCompletedLevels = () => {
+    if (!currentCampaign || !campaignProgress[currentCampaign.id]) return [];
+    
+    return campaignProgress[currentCampaign.id].levels
+      .filter(progress => progress.completed)
+      .map(progress => progress.levelId);
+  };
+
+  const isLevelAvailable = (level) => {
+    const completedLevels = getCompletedLevels();
+    
+    // Первый уровень всегда доступен
+    if (level.levelNumber === 1) return true;
+    
+    // Уровень доступен если предыдущий завершен
+    const previousLevel = currentCampaign.levels.find(l => l.levelNumber === level.levelNumber - 1);
+    return previousLevel && completedLevels.includes(previousLevel.id);
+  };
+
+  const getLevelStatus = (level) => {
+    const completedLevels = getCompletedLevels();
+    
+    if (completedLevels.includes(level.id)) return 'completed';
+    if (isLevelAvailable(level)) return 'available';
+    return 'locked';
+  };
+
+  const handleLevelClick = async (level) => {
+    if (!isLevelAvailable(level)) return;
 
     // Проверка энергии
-    if (user.energy < level.cost) {
+    if (user.energy < level.energyCost) {
       setShowEnergyModal(true);
       return;
     }
 
     setCurrentLevel(level);
-    dispatch(useEnergy(level.cost));
     
-    // Переход на экран боя (арену)
-    dispatch(initGame());
-    dispatch(navigateTo('arena'));
+    try {
+      // Начинаем битву на сервере
+      await startCampaignBattle(level.id);
+      
+      // Переходим на арену
+      dispatch(navigateTo('arena'));
+    } catch (error) {
+      console.error('Ошибка начала уровня:', error);
+      // TODO: Показать сообщение об ошибке
+    }
   };
 
-  const handleBattleComplete = (isVictory) => {
+  const handleBattleComplete = async (isVictory) => {
     if (isVictory && currentLevel) {
-      // Разблокировка следующего уровня
-      if (!completedLevels.includes(currentLevel.id + 1) && currentLevel.id < 10) {
-        setCompletedLevels(prev => [...prev, currentLevel.id + 1]);
+      try {
+        // Завершаем битву на сервере
+        await completeCampaignBattle(currentLevel.id, true);
+        
+        // Обновляем прогресс
+        await loadCampaignProgress(user.id);
+        
+        // Обрабатываем игровые события
+        await handleGameEvent(true, 'campaign');
+      } catch (error) {
+        console.error('Ошибка завершения битвы:', error);
       }
     }
   };
 
-  const isLevelAvailable = (levelId) => {
-    return completedLevels.includes(levelId);
-  };
-
   const handleCloseModal = () => {
-    // Ничего не делаем, просто закрываем модальное окно
-    // Остаемся в кампании
+    // Просто закрываем модальное окно
   };
 
   const handleCloseEnergyModal = () => {
     setShowEnergyModal(false);
   };
 
-  const getLevelStatus = (levelId) => {
-    if (completedLevels.includes(levelId)) return 'completed';
-    if (isLevelAvailable(levelId)) return 'available';
-    return 'locked';
-  };
+  if (loading || apiLoading) {
+    return (
+      <div className="campaign-screen">
+        <BackButton />
+        <ResourceBar />
+        <div className="campaign-loading">
+          <div className="loading-spinner">⚔️</div>
+          <p>Загрузка кампании...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentCampaign) {
+    return (
+      <div className="campaign-screen">
+        <BackButton />
+        <ResourceBar />
+        <div className="campaign-error">
+          <p>Кампании не найдены</p>
+        </div>
+      </div>
+    );
+  }
+
+  const completedLevels = getCompletedLevels();
+  const totalLevels = currentCampaign.levels?.length || 0;
 
   return (
     <div className="campaign-screen">
@@ -89,29 +168,38 @@ const Campaign = () => {
       <ResourceBar />
       
       <div className="campaign-header">
-        <h2>Кампания</h2>
+        <h2>{currentCampaign.name}</h2>
         <div className="campaign-progress">
-          Прогресс: {completedLevels.length - 1}/10
+          Прогресс: {completedLevels.length}/{totalLevels}
         </div>
+        {currentCampaign.description && (
+          <div className="campaign-description">
+            {currentCampaign.description}
+          </div>
+        )}
       </div>
 
       <div className="campaign-levels-grid">
-        {campaignLevels.map(level => {
-          const status = getLevelStatus(level.id);
-          const isDisabled = status === 'locked' || user.energy < level.cost;
+        {currentCampaign.levels?.map(level => {
+          const status = getLevelStatus(level);
+          const isDisabled = status === 'locked' || user.energy < level.energyCost;
           
           return (
             <div
               key={level.id}
               className={`campaign-level-item ${status} ${isDisabled ? 'disabled' : ''}`}
-              onClick={() => handleLevelClick(level)}
+              onClick={() => !isDisabled && handleLevelClick(level)}
             >
               <div className="level-icon">
-                {levelImages[level.id - 1]}
+                {levelImages[level.levelNumber - 1] || '⚔️'}
               </div>
               <div className="level-info">
-                <div className="level-name">{level.name}</div>
-                <div className="level-cost">⚡ {level.cost}</div>
+                <div className="level-name">Уровень {level.levelNumber}</div>
+                <div className="level-cost">⚡ {level.energyCost}</div>
+                <div className="level-rewards">
+                  <span>💰 {level.goldReward}</span>
+                  <span>⭐ {level.expReward}</span>
+                </div>
                 {status === 'completed' && <div className="level-completed">✓</div>}
                 {status === 'locked' && <div className="level-locked">🔒</div>}
               </div>
@@ -131,7 +219,7 @@ const Campaign = () => {
       <EnergyModal 
         isOpen={showEnergyModal}
         onClose={handleCloseEnergyModal}
-        requiredEnergy={6}
+        requiredEnergy={currentLevel?.energyCost || 6}
         currentEnergy={user.energy}
       />
     </div>

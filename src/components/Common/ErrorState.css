@@ -1,0 +1,182 @@
+.error-state {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   justify-content: center;
+   padding: 40px 20px;
+   text-align: center;
+   background: linear-gradient(135deg, #fff5f5, #fed7d7);
+   border-radius: 16px;
+   border: 2px solid #feb2b2;
+   box-shadow: 0 8px 25px rgba(254, 178, 178, 0.3);
+   margin: 20px 0;
+   position: relative;
+   overflow: hidden;
+ }
+ 
+ .error-state::before {
+   content: '';
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   height: 4px;
+   background: linear-gradient(90deg, #fc8181, #f56565, #e53e3e);
+ }
+ 
+ .error-icon {
+   font-size: 4rem;
+   margin-bottom: 20px;
+   animation: shake 0.5s ease-in-out;
+   filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+ }
+ 
+ .error-message {
+   font-size: 1.3rem;
+   color: #742a2a;
+   margin: 0 0 25px 0;
+   font-weight: 600;
+   line-height: 1.5;
+   max-width: 400px;
+ }
+ 
+ .retry-button {
+   background: linear-gradient(135deg, #fc8181, #f56565);
+   color: white;
+   border: none;
+   padding: 14px 32px;
+   border-radius: 50px;
+   cursor: pointer;
+   font-weight: bold;
+   font-size: 1.1rem;
+   transition: all 0.3s ease;
+   box-shadow: 0 6px 20px rgba(245, 101, 101, 0.4);
+   position: relative;
+   overflow: hidden;
+ }
+ 
+ .retry-button::before {
+   content: '';
+   position: absolute;
+   top: 0;
+   left: -100%;
+   width: 100%;
+   height: 100%;
+   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+   transition: left 0.5s;
+ }
+ 
+ .retry-button:hover {
+   transform: translateY(-3px);
+   box-shadow: 0 10px 25px rgba(245, 101, 101, 0.6);
+   background: linear-gradient(135deg, #f56565, #e53e3e);
+ }
+ 
+ .retry-button:hover::before {
+   left: 100%;
+ }
+ 
+ .retry-button:active {
+   transform: translateY(-1px);
+ }
+ 
+ .retry-button:disabled {
+   background: linear-gradient(135deg, #cccccc, #999999);
+   cursor: not-allowed;
+   transform: none;
+   box-shadow: none;
+ }
+ 
+ .retry-button:disabled::before {
+   display: none;
+ }
+ 
+ /* Анимации */
+ @keyframes shake {
+   0%, 100% {
+     transform: translateX(0);
+   }
+   10%, 30%, 50%, 70%, 90% {
+     transform: translateX(-5px);
+   }
+   20%, 40%, 60%, 80% {
+     transform: translateX(5px);
+   }
+ }
+ 
+ /* Варианты ошибок */
+ .error-state.warning {
+   background: linear-gradient(135deg, #fffaf0, #feebc8);
+   border-color: #fbd38d;
+ }
+ 
+ .error-state.warning::before {
+   background: linear-gradient(90deg, #f6ad55, #ed8936, #dd6b20);
+ }
+ 
+ .error-state.warning .error-message {
+   color: #744210;
+ }
+ 
+ .error-state.info {
+   background: linear-gradient(135deg, #f0fff4, #c6f6d5);
+   border-color: #9ae6b4;
+ }
+ 
+ .error-state.info::before {
+   background: linear-gradient(90deg, #68d391, #48bb78, #38a169);
+ }
+ 
+ .error-state.info .error-message {
+   color: #22543d;
+ }
+ 
+ /* Адаптивность */
+ @media (max-width: 768px) {
+   .error-state {
+     padding: 30px 15px;
+     margin: 15px 0;
+   }
+   
+   .error-icon {
+     font-size: 3rem;
+   }
+   
+   .error-message {
+     font-size: 1.1rem;
+     margin-bottom: 20px;
+   }
+   
+   .retry-button {
+     padding: 12px 25px;
+     font-size: 1rem;
+   }
+ }
+ 
+ @media (max-width: 480px) {
+   .error-state {
+     padding: 25px 10px;
+   }
+   
+   .error-icon {
+     font-size: 2.5rem;
+   }
+   
+   .error-message {
+     font-size: 1rem;
+   }
+ }
+ 
+ /* Дополнительные эффекты */
+ .error-state.pulse {
+   animation: errorPulse 2s infinite;
+ }
+ 
+ @keyframes errorPulse {
+   0%, 100% {
+     box-shadow: 0 8px 25px rgba(254, 178, 178, 0.3);
+   }
+   50% {
+     box-shadow: 0 8px 30px rgba(254, 178, 178, 0.6);
+   }
+ }
