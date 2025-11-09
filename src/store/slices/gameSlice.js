@@ -1,3 +1,4 @@
+//только состояние текущей игры
 import { createSlice } from '@reduxjs/toolkit';
 
 const config = {
@@ -40,7 +41,14 @@ const initialState = {
   isBattleActive: true,
   battleMode: 'manual',
   showBattleResultModal: false,
+  // ✅ Конфиг игры
   config: config,
+  
+  // ✅ ID для синхронизации с сервером
+ 
+  // ✅ История игры
+  turns: [],
+  superAttackUsage: [],
   serverBattleId: null, // ★★★ ДОБАВЛЕНО: ID битвы на сервере ★★★
   turns: [], // ★★★ ДОБАВЛЕНО: история ходов ★★★
   superAttackUsage: [] // ★★★ ДОБАВЛЕНО: использование супер атак ★★★

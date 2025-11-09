@@ -1,4 +1,4 @@
-// src/store/slices/appSlice.js
+// только клиентское состояние
 import { createSlice } from '@reduxjs/toolkit';
 import { fetchUser, fetchUserCards, updateUser } from './apiSlice';
 
@@ -25,7 +25,10 @@ const initialState = {
 
 export const appSlice = createSlice({
   name: 'app',
-  initialState,
+  initialState: {
+     cards: [],
+   user: null
+  },
   reducers: {
     // Локальные экшены для мгновенного обновления UI
     updateLocalResources: (state, action) => {

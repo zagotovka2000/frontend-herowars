@@ -1,72 +1,79 @@
-// src/store/slices/apiSlice.js
+//только серверные данные + загрузки
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+const API_BASE_URL = 'http://localhost:4000/api';
 
-// Mock данные
 const mockUser = {
-  id: '1',
-  username: 'Игрок',
-  level: 5,
-  experience: 1250,
-  energy: 85,
-  gold: 2500,
-  gems: 150,
-  avatar: '⚔️'
-};
-
-// User thunks
-export const fetchUser = createAsyncThunk(
-  'api/fetchUser',
-  async (userId, { rejectWithValue }) => {
-    try {
-      // ✅ В режиме разработки возвращаем моковые данные
-      if (process.env.NODE_ENV === 'development') {
-        console.log('📦 Используем моковые данные пользователя');
-        return new Promise((resolve) => {
-          setTimeout(() => resolve(mockUser), 500);
-        });
-      }
+   id: '1',
+   username: 'Игрок',
+   level: 5,
+   experience: 1250,
+   energy: 85,
+   gold: 2500,
+   gems: 150,
+   avatar: '⚔️'
+ };
+ //user thunks
+ export const fetchUser = createAsyncThunk(
+    'api/fetchUser',
+   async (telegramId, { rejectWithValue }) => {
+      try {
+        console.log(`📡  ${telegramId} с сервера...`);
+        
+        const response = await fetch(`${API_BASE_URL}/users/telegram/${telegramId}`);
+        if (!response.ok) {
+          throw new Error(`Ошибка сервера: ${response.status}`);
+        }
+        
+        const userData = await response.json();
+        console.log('✅ Пользователь загружен с сервера:', userData);
+        
+        return userData;
+     } catch (error) {
+       return rejectWithValue(error.message);
+     }
+   }
+ );
+ 
+ export const updateUser = createAsyncThunk(
+   'api/updateUser',
+   async ({ userId, updates }, { rejectWithValue }) => {
+   try {
+      console.log(`📡 Сохраняем пользователя ${userId} на сервер...`, updates);
       
-      // ✅ В продакшене - реальный API вызов
-      const response = await fetch(`${API_BASE_URL}/users/${userId}`);
-      if (!response.ok) throw new Error('Failed to fetch user');
-      return await response.json();
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
-
-export const updateUser = createAsyncThunk(
-  'api/updateUser',
-  async ({ userId, updates }, { rejectWithValue }) => {
-    try {
       const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(updates)
       });
-      if (!response.ok) throw new Error('Failed to update user');
-      return await response.json();
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
-
-export const fetchUserCards = createAsyncThunk(
-  'api/fetchUserCards',
-  async (userId, { rejectWithValue }) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/${userId}/cards`);
-      if (!response.ok) throw new Error('Failed to fetch user cards');
-      return await response.json();
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
+      
+      if (!response.ok) {
+        throw new Error(`Ошибка сервера: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('✅ Пользователь сохранен на сервере:', result);
+      
+      return result.user; // Возвращаем обновленные данные
+    }catch (error) {
+       return rejectWithValue(error.message);
+     }
+   }
+ );
+ export const fetchUserCards = createAsyncThunk(
+   'api/fetchUserCards',
+   async (userId, { rejectWithValue }) => {
+     try {
+       const response = await fetch(`${API_BASE_URL}/cards/user/${userId}`);
+       if (!response.ok) throw new Error('Failed to fetch user cards');
+       return await response.json();
+     } catch (error) {
+       return rejectWithValue(error.message);
+     }
+   }
+ );
 
 // Campaign thunks
 export const fetchCampaigns = createAsyncThunk(
@@ -130,23 +137,33 @@ export const completeCampaignLevel = createAsyncThunk(
   }
 );
 
-// Battle thunks
+// store/slices/apiSlice.js
 export const startCampaignBattle = createAsyncThunk(
-  'api/startCampaignBattle',
-  async (battleData, { rejectWithValue }) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/battles/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(battleData)
-      });
-      if (!response.ok) throw new Error('Failed to start battle');
-      return await response.json();
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
+   'api/startCampaignBattle',
+   async (battleData, { rejectWithValue }) => {
+     try {
+       console.log('🚀 Отправка запроса на сервер:', battleData);
+       
+       const response = await fetch(`${API_BASE_URL}/campaigns/level/start`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(battleData)
+       });
+       
+       if (!response.ok) {
+         throw new Error('Failed to start battle');
+       }
+       
+       const result = await response.json();
+       console.log(" result:", result)
+       console.log('✅ Ответ сервера:', result);
+       return result;
+     } catch (error) {
+       console.error('❌ Ошибка в thunk:', error);
+       return rejectWithValue(error.message);
+     }
+   }
+ );
 
 export const completeBattle = createAsyncThunk(
   'api/completeBattle',
@@ -356,46 +373,49 @@ export const openFreeChestAction = createAsyncThunk(
 const apiSlice = createSlice({
   name: 'api',
   initialState: {
-    user: null,
-    cards: [],
+
+    // ✅ ТОЛЬКО серверные данные
     campaigns: [],
     campaignProgress: {},
+    quests: [],
+    expeditions: [], 
+    dailyRewards: [],
+    shopItems: [],
+    
+    // ✅ Состояние загрузки
     loading: false,
     error: null,
+    
+    // ✅ Временные данные текущей операции
     currentBattle: null,
   },
+  
   reducers: {
-    clearError: (state) => {
-      state.error = null;
-    },
-    setCurrentBattle: (state, action) => {
-      state.currentBattle = action.payload;
-    },
-    clearCurrentBattle: (state) => {
-      state.currentBattle = null;
-    },
-  },
-  extraReducers: (builder) => {
-    builder
-      // User cases
+   clearError: (state) => {
+     state.error = null;
+   },
+   setCurrentBattle: (state, action) => {
+     state.currentBattle = action.payload;
+   },
+   clearCurrentBattle: (state) => {
+     state.currentBattle = null;
+   },
+ },
+ extraReducers: (builder) => {
+   builder
+      //user
       .addCase(fetchUser.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(fetchUser.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload;
-      })
-      .addCase(fetchUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-      .addCase(fetchUserCards.fulfilled, (state, action) => {
-        state.cards = action.payload;
-      })
-      .addCase(updateUser.fulfilled, (state, action) => {
-        state.user = { ...state.user, ...action.payload };
-      })
-      
+         state.loading = true;
+         state.error = null;
+       })
+       .addCase(fetchUser.fulfilled, (state, action) => {
+         state.loading = false;
+         // Пользователь сохраняется в appSlice, здесь только сбрасываем loading
+       })
+       .addCase(fetchUser.rejected, (state, action) => {
+         state.loading = false;
+         state.error = action.payload;
+       })
       // Campaign cases
       .addCase(fetchCampaigns.pending, (state) => {
         state.loading = true;

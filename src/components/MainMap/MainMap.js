@@ -6,8 +6,22 @@ import './MainMap.css';
 
 const MainMap = () => {
   const dispatch = useAppDispatch();
-  const user = useAppSelector(state => state.api.user);
+  const user = useAppSelector(state => state.api);
+  console.log(" MainMap user:", user)
   const guild = useAppSelector(state => state.app.guild);
+
+    // ✅ ЗАЩИТА: проверяем, что user загружен
+    if (!user) {
+      return (
+        <div className="main-map">
+          <div className="map-loading">
+            <div className="loading-spinner">⚔️</div>
+            <p>Загрузка карты...</p>
+          </div>
+        </div>
+      );
+    }
+
 
   const gameModes = [
     {
@@ -17,7 +31,8 @@ const MainMap = () => {
       position: { top: '20%', left: '10%' },
       description: 'Фарм предметов (6⚡)',
       energyCost: 6,
-      serverEndpoint: '/campaign'
+      serverEndpoint: '/campaign',
+      energy: user.energy
     },
     {
       id: 'arena',
@@ -114,7 +129,7 @@ const MainMap = () => {
       }, 500);
     });
   };
-
+  console.log('===тут user undefined==',user)
   return (
     <div className="main-map">
       <div className="map-background"></div>
