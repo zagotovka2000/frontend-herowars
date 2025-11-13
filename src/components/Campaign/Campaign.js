@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+// src/components/Campaign/Campaign.js
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { navigateTo } from '../../store/slices/navigationSlice';
 import BackButton from '../Common/BackButton';
 import ResourceBar from '../Common/ResourceBar';
-import { fetchCampaigns, fetchCampaignProgress } from '../../store/slices/apiSlice';
 import BattleResultModal from '../Common/BattleResultModal';
 import CardSelectionModal from '../Common/CardSelectionModal/CardSelectionModal';
 import EnergyModal from '../Common/EnergyModal/EnergyModal';
@@ -17,63 +17,85 @@ const Campaign = () => {
   const { user } = useAppSelector(state => state.app);
   const { showBattleResultModal: showModal, battleResult } = useAppSelector(state => state.game);
   
-  const {     loadCampaigns,     loadCampaignProgress,    loading: apiLoading   } = useApi();
+  const { loadCampaigns, loadCampaignProgress, loading: apiLoading } = useApi();
   const campaigns = useAppSelector(state => state.api.campaigns);
   const campaignProgress = useAppSelector(state => state.api.campaignProgress);
-  const userCards = useAppSelector(state => state.app.cards); // Карточки пользователя
+  const userCards = useAppSelector(state => state.app.cards || []);
 
   const { startCampaignBattle, completeCampaignBattle } = useBattle();
   const { handleBattleComplete: handleGameEvent } = useGameEvents();
-  const [showCardModal, setShowCardModal] = useState(false); 
-
+  
+  const [showCardModal, setShowCardModal] = useState(false);
   const [currentCampaign, setCurrentCampaign] = useState(null);
-
   const [currentLevel, setCurrentLevel] = useState(null);
   const [showEnergyModal, setShowEnergyModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // ✅ ДОБАВЛЕНО: useRef для отслеживания mounted состояния
+  const isMounted = useRef(true);
+
+  // Массив эмодзи для уровней
   const levelImages = [
     '🎯', '⚔️', '🏹', '🐉', '🏛️',
     '❄️', '🔥', '☁️', '🌑', '👑'
   ];
 
+  // ✅ ИСПРАВЛЕНО: useEffect с cleanup функцией
   useEffect(() => {
-    if (user) {
+    // Устанавливаем флаг mounted при монтировании
+    isMounted.current = true;
+
+    return () => {
+      // Сбрасываем флаг при размонтировании
+      isMounted.current = false;
+    };
+  }, []);
+
+  // Эффект для инициализации кампании при загрузке пользователя
+  useEffect(() => {
+    if (user && user.id) {
       initializeCampaign();
     }
   }, [user]);
 
+  // Эффект для установки текущей кампании после загрузки
+  useEffect(() => {
+    if (campaigns.length > 0 && !currentCampaign) {
+      setCurrentCampaign(campaigns[0]);
+    }
+  }, [campaigns, currentCampaign]);
+
+  // Функция инициализации кампании с проверкой mounted
   const initializeCampaign = async () => {
     try {
       setLoading(true);
-      await dispatch(fetchCampaigns(user.id)).unwrap();
-      await dispatch(fetchCampaignProgress(user.id)).unwrap();
       
-      // Устанавливаем первую кампанию как текущую
-      if (campaigns.length > 0) {
-        setCurrentCampaign(campaigns[0]);
+      // ✅ ИСПРАВЛЕНО: проверяем mounted перед обновлением состояния
+      const campaignsData = await loadCampaigns(user.id);
+      const progressData = await loadCampaignProgress(user.id);
+      
+      if (isMounted.current) {
+        // Обновляем состояние только если компонент еще mounted
+        setLoading(false);
       }
     } catch (error) {
       console.error('Ошибка загрузки кампании:', error);
-    } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   };
-  // ✅ ДОБАВЛЕНО: обновляем currentCampaign когда campaigns загружены
-  useEffect(() => {
-   if (campaigns.length > 0 && !currentCampaign) {
-     setCurrentCampaign(campaigns[0]);
-   }
- }, [campaigns, currentCampaign]);
-  // Получаем completed levels из прогресса
+
+  // Функция для получения списка завершенных уровней
   const getCompletedLevels = () => {
     if (!currentCampaign || !campaignProgress[currentCampaign.id]) return [];
     
     return campaignProgress[currentCampaign.id].levels
       .filter(progress => progress.completed)
-      .map(progress => progress.levelId) || [];;
+      .map(progress => progress.levelId) || [];
   };
 
+  // Функция проверки доступности уровня
   const isLevelAvailable = (level) => {
     const completedLevels = getCompletedLevels();
     
@@ -85,6 +107,7 @@ const Campaign = () => {
     return previousLevel && completedLevels.includes(previousLevel.id);
   };
 
+  // Функция получения статуса уровня
   const getLevelStatus = (level) => {
     const completedLevels = getCompletedLevels();
     
@@ -93,43 +116,47 @@ const Campaign = () => {
     return 'locked';
   };
 
+  // Обработчик клика по уровню с проверкой mounted
   const handleLevelClick = async (level) => {
-   if (!isLevelAvailable(level)) return;
+    if (!isLevelAvailable(level)) return;
 
-   if (user.energy < (level.energyCost || 5)) {
-     setShowEnergyModal(true);
-     return;
-   }
+    if (user.energy < (level.energyCost || 5)) {
+      if (isMounted.current) {
+        setShowEnergyModal(true);
+      }
+      return;
+    }
 
-   setCurrentLevel(level);
-   setShowCardModal(true); // Открываем модальное окно выбора карточек
- };
+    if (isMounted.current) {
+      setCurrentLevel(level);
+      setShowCardModal(true);
+    }
+  };
 
- // ✅ ДОБАВЛЕНО: обработчик начала битвы после выбора карточек
- const handleBattleStart = async (selectedCards) => {
-   try {
+  // Обработчик начала битвы после выбора карт с проверкой mounted
+  const handleBattleStart = async (selectedCards) => {
+    try {
       console.log('🎯 Начинаем битву с карточками:', selectedCards);
-      console.log('📋 Данные для битвы:', {
-        userId: user.id,
-        levelId: currentLevel.id,
-        userEnergy: user.energy
-      });
      
-     // Передаем user.id, level.id и user.energy
-     await startCampaignBattle(user.id, currentLevel.id, user.energy);
-     
-     // Переходим на арену
-     dispatch(navigateTo('arena'));
-   } catch (error) {
-     console.error('Ошибка начала уровня:', error);
-     setShowCardModal(false);
-   }
- };
+      await startCampaignBattle(user.id, currentLevel.id, user.energy);
+      
+      // ✅ ИСПРАВЛЕНО: проверяем mounted перед навигацией
+      if (isMounted.current) {
+        // Переходим на арену
+        dispatch(navigateTo('arena'));
+      }
+    } catch (error) {
+      console.error('Ошибка начала уровня:', error);
+      if (isMounted.current) {
+        setShowCardModal(false);
+      }
+    }
+  };
 
+  // Обработчик завершения битвы с проверкой mounted
   const handleBattleComplete = async (isVictory) => {
     if (isVictory && currentLevel) {
       try {
-        // Завершаем битву на сервере
         await completeCampaignBattle(currentLevel.id, true);
         
         // Обновляем прогресс
@@ -143,18 +170,25 @@ const Campaign = () => {
     }
   };
 
+  // Обработчики закрытия модальных окон
   const handleCloseModal = () => {
     // Просто закрываем модальное окно
   };
 
   const handleCloseEnergyModal = () => {
-    setShowEnergyModal(false);
+    if (isMounted.current) {
+      setShowEnergyModal(false);
+    }
   };
-  // ✅ ДОБАВЛЕНО: закрытие модального окна выбора карточек
+
   const handleCloseCardModal = () => {
-   setShowCardModal(false);
-   setCurrentLevel(null);
- };
+    if (isMounted.current) {
+      setShowCardModal(false);
+      setCurrentLevel(null);
+    }
+  };
+
+  // Отображение загрузки
   if (loading || apiLoading) {
     return (
       <div className="campaign-screen">
@@ -168,6 +202,7 @@ const Campaign = () => {
     );
   }
 
+  // Отображение ошибки если кампании не найдены
   if (!currentCampaign) {
     return (
       <div className="campaign-screen">
@@ -203,7 +238,7 @@ const Campaign = () => {
       <div className="campaign-levels-grid">
         {currentCampaign.levels?.map(level => {
           const status = getLevelStatus(level);
-          const isDisabled = status === 'locked' || user.energy < level.energyCost;
+          const isDisabled = status === 'locked' || (user.energy || 0) < level.energyCost;
           
           return (
             <div
@@ -241,10 +276,10 @@ const Campaign = () => {
         isOpen={showEnergyModal}
         onClose={handleCloseEnergyModal}
         requiredEnergy={currentLevel?.energyCost || 6}
-        currentEnergy={user.energy}
+        currentEnergy={user.energy || 0}
       />
-            {/* ✅ ДОБАВЛЕНО: Модальное окно выбора карточек */}
-            <CardSelectionModal
+
+      <CardSelectionModal
         isOpen={showCardModal}
         onClose={handleCloseCardModal}
         onBattleStart={handleBattleStart}

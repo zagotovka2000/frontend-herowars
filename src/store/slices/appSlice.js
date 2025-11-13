@@ -1,36 +1,16 @@
-// только клиентское состояние
+// store/slices/appSlice.js
 import { createSlice } from '@reduxjs/toolkit';
-import { fetchUser, fetchUserCards, updateUser } from './apiSlice';
+import { fetchUser, fetchUserCards, updateUser, startCampaignLevel, completeCampaignLevel, completeBattle } from './apiSlice';
 
-// Начальное состояние теперь будет загружаться с сервера
-const initialState = {
-
-  cards: [],
-  campaigns: [],
-  quests: [],
-  expeditions: [],
-  dailyRewards: [],
-  guild: {
-   id: '1',
-   name: 'Гильдия Героев',
-   rank: 15,
-   members: 24
- },
-  inventory: {
-    potions: 0,
-    scrolls: 0,
-    chests: 0
-  }
-};
+// УДАЛЕНО: неиспользуемая константа initialState
 
 export const appSlice = createSlice({
   name: 'app',
   initialState: {
-     cards: [],
-   user: null
+     cards: [],   // Карты пользователя
+     user: null   // Данные пользователя
   },
   reducers: {
-    // Локальные экшены для мгновенного обновления UI
     updateLocalResources: (state, action) => {
       if (state.user) {
         state.user = { ...state.user, ...action.payload };
@@ -46,18 +26,6 @@ export const appSlice = createSlice({
       const cardIndex = state.cards.findIndex(card => card.id === id);
       if (cardIndex !== -1) {
         state.cards[cardIndex] = { ...state.cards[cardIndex], ...updates };
-      }
-    },
-    
-    startLocalExpedition: (state, action) => {
-      state.expeditions.push(action.payload);
-    },
-    
-    completeLocalQuest: (state, action) => {
-      const questId = action.payload;
-      const quest = state.quests.find(q => q.id === questId);
-      if (quest) {
-        quest.completed = true;
       }
     },
     
@@ -77,7 +45,6 @@ export const appSlice = createSlice({
     addExperience: (state, action) => {
       if (state.user) {
         state.user.experience += action.payload;
-        // Логика повышения уровня может быть добавлена здесь
       }
     },
     
@@ -94,10 +61,6 @@ export const appSlice = createSlice({
 
     setCardsData: (state, action) => {
       state.cards = action.payload;
-    },
-
-    setCampaignsData: (state, action) => {
-      state.campaigns = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -110,6 +73,24 @@ export const appSlice = createSlice({
       })
       .addCase(updateUser.fulfilled, (state, action) => {
         state.user = { ...state.user, ...action.payload };
+      })
+      // ДОБАВЛЕНО: обработка обновления энергии при начале уровня кампании
+      .addCase(startCampaignLevel.fulfilled, (state, action) => {
+        if (action.payload.userEnergy !== undefined && state.user) {
+          state.user.energy = action.payload.userEnergy;
+        }
+      })
+      // ДОБАВЛЕНО: обработка обновления пользователя после завершения уровня
+      .addCase(completeCampaignLevel.fulfilled, (state, action) => {
+        if (action.payload.user && state.user) {
+          state.user = { ...state.user, ...action.payload.user };
+        }
+      })
+      // ДОБАВЛЕНО: обработка обновления пользователя после завершения битвы
+      .addCase(completeBattle.fulfilled, (state, action) => {
+        if (action.payload.user && state.user) {
+          state.user = action.payload.user;
+        }
       });
   }
 });
@@ -118,15 +99,12 @@ export const {
   updateLocalResources,
   addLocalCard,
   updateLocalCard,
-  startLocalExpedition,
-  completeLocalQuest,
   addGold,
   addGems,
   addExperience,
   useEnergy,
   setUserData,
-  setCardsData,
-  setCampaignsData
+  setCardsData
 } = appSlice.actions;
 
 export default appSlice.reducer;

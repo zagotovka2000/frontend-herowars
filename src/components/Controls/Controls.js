@@ -1,84 +1,84 @@
+// src/components/Controls/Controls.js
 import React from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { setBattleMode, resetGame } from '../../store/slices/gameSlice';
+import { initGame } from '../../store/slices/gameSlice'; // ✅ ИСПРАВЛЕНО: используем initGame вместо resetGame
 import { useBattle } from '../../hooks/useBattle';
 import './Controls.css';
 
 const Controls = () => {
   const dispatch = useAppDispatch();
+  
+  // Получаем состояние игры из Redux store
   const { 
-    battleMode, 
     selectedPlayerCard, 
-    selectedEnemyCard, 
+    selectedEnemyCard,
     isPlayerTurn,
-    playerCards,
-    enemyCards 
+    isBattleActive
   } = useAppSelector(state => state.game);
   
-  const { performAttack, autoPlayerAttack } = useBattle();
+  // Получаем функции из хука useBattle
+  const { 
+    performAttack, 
+    toggleBattleMode,
+    battleMode,
+    closeBattleResultModal
+  } = useBattle();
 
+  // Обработчик ручной атаки
   const handleAttack = () => {
     if (selectedPlayerCard && selectedEnemyCard) {
-      console.log(`🎯 Атака: игрок ${selectedPlayerCard.id} → враг ${selectedEnemyCard.id}`);
+      console.log(`🎯 Ручная атака: игрок ${selectedPlayerCard.id} → враг ${selectedEnemyCard.id}`);
       performAttack(selectedPlayerCard, selectedEnemyCard, false);
-    } else {
-      console.log('❌ Не выбраны карты для атаки');
     }
   };
 
-  const handleAutoAttack = () => {
-    console.log('🤖 Запуск авто-атаки');
-    autoPlayerAttack();
-  };
-
-  const handleModeToggle = () => {
-    const newMode = battleMode === 'manual' ? 'auto' : 'manual';
-    dispatch(setBattleMode(newMode));
-    console.log(`🎮 Режим битвы изменен на: ${newMode}`);
-  };
-
+  // Обработчик сброса игры
   const handleReset = () => {
-    console.log('🔄 Сброс игры');
-    dispatch(resetGame());
+    console.log('🔄 Новая игра');
+    dispatch(initGame()); // ✅ ИСПРАВЛЕНО: используем initGame
   };
 
-  const canAttack = selectedPlayerCard && selectedEnemyCard && isPlayerTurn && battleMode === 'manual';
-  const canAutoAttack = isPlayerTurn && battleMode === 'auto' && playerCards.length > 0 && enemyCards.length > 0;
+  // Определяем, нужно ли показывать кнопку атаки
+  const showAttackButton = battleMode === 'manual' && 
+                          isPlayerTurn && 
+                          isBattleActive && 
+                          selectedPlayerCard && 
+                          selectedEnemyCard;
 
   return (
     <div className='controls'>
-      {/* Кнопка ручной атаки */}
-      <button 
-        className='attackButton'
-        onClick={handleAttack}
-        disabled={!canAttack}
-      >
-        {canAttack ? `Атаковать (${selectedPlayerCard.value}⚔️)` : 'Атаковать!'}
-      </button>
+      {/* Кнопка атаки - ТОЛЬКО в ручном режиме и когда карты выбраны */}
+      {showAttackButton && (
+        <button 
+          className='attack-button'
+          onClick={handleAttack}
+        >
+          Атаковать ({selectedPlayerCard.value}⚔️)
+        </button>
+      )}
       
-      {/* Кнопка авто-атаки */}
-      <button 
-        className='autoAttackButton'
-        onClick={handleAutoAttack}
-        disabled={!canAutoAttack}
-      >
-        Авто-атака
-      </button>
-      
-      {/* Переключение режима */}
+      {/* Переключение режима боя */}
       <button 
         className={`mode-toggle ${battleMode}`}
-        onClick={handleModeToggle}
+        onClick={toggleBattleMode}
       >
-        {battleMode === 'manual' ? '⚔️ Ручной' : '🤖 Авто'}
+        {battleMode === 'manual' ? '🤖 Авто' : '⚔️ Ручной'}
       </button>
 
-      {/* Сброс игры */}
+      {/* Кнопка новой игры */}
       <button 
-        className='resetButton'
+        className='reset-button'
         onClick={handleReset}
       >
         Новая игра
+      </button>
+
+      {/* ✅ ДОБАВЛЕНО: кнопка выхода (опционально) */}
+      <button 
+        className='exit-button'
+        onClick={closeBattleResultModal}
+      >
+        Выйти
       </button>
     </div>
   );

@@ -1,5 +1,5 @@
-// components/Common/CardSelectionModal/CardSelectionModal.js
-import React, { useState } from 'react';
+// src/components/Common/CardSelectionModal/CardSelectionModal.js
+import React, { useState, useMemo } from 'react';
 import './CardSelectionModal.css';
 
 const CardSelectionModal = ({ 
@@ -9,40 +9,51 @@ const CardSelectionModal = ({
   userCards,
   level 
 }) => {
+  // Состояние выбранных карт
   const [selectedCards, setSelectedCards] = useState([]);
+  // Текущая страница пагинации
   const [currentPage, setCurrentPage] = useState(0);
+  // Количество карт на странице
   const cardsPerPage = 8;
 
+  // ✅ ИСПРАВЛЕНО: вынесем defaultCards из useMemo, чтобы он не менялся между рендерами
+  const defaultCards = useMemo(() => 
+    Array.from({ length: 20 }, (_, i) => ({
+      id: i + 1,
+      name: `Карточка ${i + 1}`,
+      type: 'warrior',
+      level: Math.floor(i / 5) + 1,
+      attack: 10 + i,
+      health: 50 + i * 2,
+      image: ['⚔️', '🛡️', '🔥', '❄️', '⚡'][i % 5]
+    })), 
+    [] // Пустой массив зависимостей - создается один раз
+  );
+
+  // ✅ ИСПРАВЛЕНО: убрали useMemo для displayCards - вычисляем напрямую
+  const displayCards = userCards && userCards.length > 0 ? userCards : defaultCards;
+
+  // Если модальное окно закрыто - не рендерим
   if (!isOpen) return null;
 
-  // Заглушки для изображений (в будущем заменить на реальные)
-  const enemyImages = [
-    '🐉', '🧙', '⚔️', '🛡️', '🔥'
-  ];
+  // Эмодзи для противников
+  const enemyImages = ['🐉', '🧙', '⚔️', '🛡️', '🔥'];
+  // Эмодзи для наград
+  const rewardImages = ['💰', '⚡', '🛡️', '⚔️', '❤️'];
 
-  const rewardImages = [
-    '💰', '⚡', '🛡️', '⚔️', '❤️'
-  ];
-
-  // Заглушки для карточек пользователя (если нет реальных)
-  const defaultCards = userCards.length > 0 ? userCards : Array.from({ length: 20 }, (_, i) => ({
-    id: i + 1,
-    name: `Карточка ${i + 1}`,
-    type: 'warrior',
-    level: Math.floor(i / 5) + 1,
-    attack: 10 + i,
-    health: 50 + i * 2,
-    image: ['⚔️', '🛡️', '🔥', '❄️', '⚡'][i % 5]
-  }));
-
-  const totalPages = Math.ceil(defaultCards.length / cardsPerPage);
-  const currentCards = defaultCards.slice(
+  // Вычисляем общее количество страниц
+  const totalPages = Math.ceil(displayCards.length / cardsPerPage);
+  // Получаем карты для текущей страницы
+  const currentCards = displayCards.slice(
     currentPage * cardsPerPage,
     (currentPage + 1) * cardsPerPage
   );
 
+  // Обработчик клика по карте
   const handleCardClick = (card) => {
-    if (selectedCards.find(c => c.id === card.id)) {
+    const isAlreadySelected = selectedCards.find(c => c.id === card.id);
+    
+    if (isAlreadySelected) {
       // Удаляем карточку если уже выбрана
       setSelectedCards(selectedCards.filter(c => c.id !== card.id));
     } else if (selectedCards.length < 5) {
@@ -51,6 +62,7 @@ const CardSelectionModal = ({
     }
   };
 
+  // Обработчик начала битвы
   const handleStartBattle = () => {
     if (selectedCards.length === 5) {
       onBattleStart(selectedCards);
@@ -58,12 +70,14 @@ const CardSelectionModal = ({
     }
   };
 
+  // Переход на следующую страницу
   const nextPage = () => {
     if (currentPage < totalPages - 1) {
       setCurrentPage(currentPage + 1);
     }
   };
 
+  // Переход на предыдущую страницу
   const prevPage = () => {
     if (currentPage > 0) {
       setCurrentPage(currentPage - 1);
@@ -82,7 +96,7 @@ const CardSelectionModal = ({
 
         <div className="modal-content">
           
-          {/* Верхняя часть: противники */}
+          {/* Секция противников */}
           <div className="enemies-section">
             <h3>Противники</h3>
             <div className="enemies-grid">
@@ -95,7 +109,7 @@ const CardSelectionModal = ({
             </div>
           </div>
 
-          {/* Средняя часть: возможные награды */}
+          {/* Секция наград */}
           <div className="rewards-section">
             <h3>Возможные награды</h3>
             <div className="rewards-grid">
@@ -107,7 +121,7 @@ const CardSelectionModal = ({
             </div>
           </div>
 
-          {/* Нижняя часть: выбор карточек */}
+          {/* Секция выбора карточек */}
           <div className="cards-section">
             
             {/* Выбранные карточки (5 слотов) */}
@@ -173,7 +187,7 @@ const CardSelectionModal = ({
             onClick={handleStartBattle}
             disabled={selectedCards.length !== 5}
           >
-            ⚔️ В БОЙ
+            ⚔️ В БОЙ ({selectedCards.length}/5)
           </button>
         </div>
       </div>

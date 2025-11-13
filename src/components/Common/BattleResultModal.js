@@ -1,3 +1,4 @@
+// src/components/Common/BattleResultModal.js
 import React, { useEffect } from 'react';
 import { useAppDispatch } from '../../store/hooks';
 import { hideBattleResultModal } from '../../store/slices/gameSlice';
@@ -12,19 +13,23 @@ const BattleResultModal = ({
 }) => {
   const dispatch = useAppDispatch();
 
+  // Эффект для обработки завершения битвы при открытии модального окна
   useEffect(() => {
     if (isOpen && onBattleComplete) {
       onBattleComplete(isVictory);
     }
   }, [isOpen, isVictory, onBattleComplete]);
 
+  // Обработчик закрытия модального окна
   const handleClose = () => {
     dispatch(hideBattleResultModal());
     if (onClose) onClose();
   };
 
+  // Если модальное окно закрыто - не рендерим
   if (!isOpen) return null;
 
+  // Данные для отображения в зависимости от результата
   const resultData = {
     victory: {
       title: '🎉 Победа!',
@@ -46,22 +51,27 @@ const BattleResultModal = ({
     <div className="modal-overlay">
       <div className="modal-content campaign-result" style={{ borderColor: data.color }}>
         
+        {/* Кнопка закрытия */}
         <button className="modal-close-button" onClick={handleClose}>
           ✕
         </button>
         
+        {/* Иконка результата */}
         <div className="result-icon" style={{ color: data.color }}>
           {data.icon}
         </div>
         
+        {/* Заголовок результата */}
         <h2 className="result-title" style={{ color: data.color }}>
           {data.title}
         </h2>
         
+        {/* Сообщение результата */}
         <p className="result-message">
           {data.message}
         </p>
         
+        {/* Дополнительная информация для победы */}
         {isVictory && (
           <div className="campaign-rewards">
             <h3>Уровень пройден!</h3>
@@ -71,6 +81,7 @@ const BattleResultModal = ({
           </div>
         )}
         
+        {/* Кнопка продолжения */}
         {showContinueButton && (
           <button 
             className="confirm-button" 

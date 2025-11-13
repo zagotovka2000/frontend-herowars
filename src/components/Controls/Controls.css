@@ -1,72 +1,47 @@
+/* Controls.css */
 .controls {
    display: flex;
+   gap: 10px;
+   flex-wrap: wrap;
    justify-content: center;
-   gap: 15px;
+   padding: 15px;
  }
  
- .attackButton, .resetButton {
-   padding: 12px 24px;
-   font-size: 1rem;
+ .attackButton, .autoAttackButton, .mode-toggle, .resetButton {
+   padding: 10px 15px;
    border: none;
-   border-radius: 50px;
-   color: white;
+   border-radius: 8px;
    cursor: pointer;
-   transition: all 0.3s ease;
-   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
    font-weight: bold;
+   transition: all 0.3s ease;
  }
  
  .attackButton {
-   background: linear-gradient(135deg, #ff6b6b, #ee5a24);
- }
- 
- .attackButton:hover:not(:disabled) {
-   transform: translateY(-3px);
-   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
- }
- 
- .attackButton:disabled {
-   background: #7f8c8d;
-   cursor: not-allowed;
-   transform: none;
-   box-shadow: none;
- }
- 
- .resetButton {
-   background: linear-gradient(135deg, #4ecdc4, #44a08d);
- }
- 
- .resetButton:hover {
-   transform: translateY(-3px);
-   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
- }
- 
- @media (max-width: 768px) {
-   .controls {
-     gap: 10px;
-   }
-   
-   .attackButton, .resetButton {
-     padding: 10px 20px;
-     font-size: 0.9rem;
-   }
- }
- .mode-toggle {
-   padding: 8px 16px;
-   border: 2px solid #4CAF50;
-   background: #2E7D32;
+   background: #4CAF50;
    color: white;
-   border-radius: 20px;
-   cursor: pointer;
-   font-weight: bold;
-   transition: all 0.3s;
+ }
+ 
+ .autoAttackButton {
+   background: #FF9800;
+   color: white;
+ }
+ 
+ .mode-toggle.manual {
+   background: #2196F3;
+   color: white;
  }
  
  .mode-toggle.auto {
-   background: #FF9800;
-   border-color: #FFC107;
- }
- .mode-toggle:hover {
-   transform: scale(1.05);
+   background: #9C27B0;
+   color: white;
  }
  
+ .resetButton {
+   background: #f44336;
+   color: white;
+ }
+ 
+ .attackButton:disabled, .autoAttackButton:disabled {
+   background: #cccccc;
+   cursor: not-allowed;
+ }

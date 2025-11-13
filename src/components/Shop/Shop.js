@@ -1,46 +1,60 @@
-import React, { useEffect } from 'react';
+// src/components/Shop/Shop.js
+import React, { useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { useApi } from '../../hooks/useApi';
-import { useAsync } from '../../hooks/useAsync';
 import { addGold, addGems } from '../../store/slices/appSlice';
 import BackButton from '../Common/BackButton';
 import ResourceBar from '../Common/ResourceBar';
 import LoadingState from '../Common/LoadingState';
-import ErrorState from '../Common/ErrorState';
+import './Shop.css';
 
 const Shop = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector(state => state.app);
   const { getShopItems, purchaseItem } = useApi();
   
-  const { 
-    execute: loadItems, 
-    loading: itemsLoading, 
-    error: itemsError, 
-    data: items = [] 
-  } = useAsync(getShopItems);
-  
-  const { 
-    execute: handlePurchase, 
-    loading: purchasing, 
-    error: purchaseError 
-  } = useAsync(purchaseItem);
+  // Состояния компонента
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [purchasingItem, setPurchasingItem] = useState(null);
+  const [activeCategory, setActiveCategory] = useState('cards');
 
+  // Эффект для загрузки товаров при монтировании
   useEffect(() => {
     loadItems();
-  }, [loadItems]);
+  }, []);
 
+  // Функция загрузки товаров
+  const loadItems = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const shopItems = await getShopItems();
+      setItems(shopItems);
+    } catch (err) {
+      console.error('Ошибка загрузки магазина:', err);
+      setError('Не удалось загрузить товары');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Функция покупки товара
   const onPurchase = async (item) => {
     if (!user) return;
     
     try {
+      setPurchasingItem(item.id);
+      setError(null);
+      
       const purchaseData = {
         userId: user.id,
         itemId: item.id,
         quantity: 1
       };
 
-      const result = await handlePurchase(purchaseData);
+      const result = await purchaseItem(purchaseData);
       
       if (result.success) {
         // Обновляем локальное состояние
@@ -50,14 +64,18 @@ const Shop = () => {
           dispatch(addGems(-item.price));
         }
         
-        alert(`Покупка успешна! Вы получили: ${item.name}`);
+        // Можно показать уведомление об успешной покупке
+        console.log(`Покупка успешна! Вы получили: ${item.name}`);
       }
     } catch (error) {
       console.error('Ошибка покупки:', error);
-      // Ошибка уже обработана в useAsync
+      setError('Ошибка при покупке товара');
+    } finally {
+      setPurchasingItem(null);
     }
   };
 
+  // Проверка возможности покупки товара
   const canAfford = (item) => {
     if (!user) return false;
     
@@ -69,7 +87,21 @@ const Shop = () => {
     return false;
   };
 
-  if (itemsLoading) {
+  // Фильтрация товаров по категориям
+  const filteredItems = items.filter(item => 
+    item.category === activeCategory || !item.category
+  );
+
+  // Категории магазина
+  const categories = [
+    { id: 'cards', name: 'Карты', icon: '🃏' },
+    { id: 'boosters', name: 'Усиления', icon: '⚡' },
+    { id: 'resources', name: 'Ресурсы', icon: '💰' },
+    { id: 'special', name: 'Особое', icon: '🎁' }
+  ];
+
+  // Отображение загрузки
+  if (loading) {
     return (
       <div className="shop-screen">
         <BackButton />
@@ -79,43 +111,47 @@ const Shop = () => {
     );
   }
 
-  if (itemsError) {
-    return (
-      <div className="shop-screen">
-        <BackButton />
-        <ResourceBar />
-        <ErrorState error={itemsError.message || "Ошибка загрузки магазина"} onRetry={loadItems} />
-      </div>
-    );
-  }
-
   return (
     <div className="shop-screen">
       <BackButton />
       <ResourceBar />
       
+      {/* Заголовок магазина */}
       <div className="shop-header">
         <h2>🏪 Магазин</h2>
         <p>Улучшайте своих героев и получайте преимущества!</p>
       </div>
 
-      {purchaseError && (
+      {/* Ошибка загрузки */}
+      {error && (
         <div className="shop-error">
-          <ErrorState error={purchaseError.message || "Ошибка покупки"} />
+          <div className="error-message">
+            <div className="error-icon">❌</div>
+            <p>{error}</p>
+            <button onClick={loadItems}>Попробовать снова</button>
+          </div>
         </div>
       )}
 
+      {/* Категории товаров */}
       <div className="shop-categories">
-        <button className="category-btn active">Карты</button>
-        <button className="category-btn">Усиления</button>
-        <button className="category-btn">Ресурсы</button>
-        <button className="category-btn">Особое</button>
+        {categories.map(category => (
+          <button 
+            key={category.id}
+            className={`category-btn ${activeCategory === category.id ? 'active' : ''}`}
+            onClick={() => setActiveCategory(category.id)}
+          >
+            <span className="category-icon">{category.icon}</span>
+            {category.name}
+          </button>
+        ))}
       </div>
 
+      {/* Сетка товаров */}
       <div className="shop-items-grid">
-        {items.map(item => {
+        {filteredItems.map(item => {
           const affordable = canAfford(item);
-          const isPurchasing = purchasing;
+          const isPurchasing = purchasingItem === item.id;
           
           return (
             <div key={item.id} className={`shop-item ${!affordable ? 'unaffordable' : ''}`}>
@@ -134,6 +170,7 @@ const Shop = () => {
                 <div className="item-stats">
                   {item.bonus && <span>+{item.bonus} ⚔️</span>}
                   {item.duration && <span>⏱️ {item.duration}ч</span>}
+                  {item.quantity && <span>📦 {item.quantity} шт</span>}
                 </div>
               </div>
               
@@ -148,14 +185,17 @@ const Shop = () => {
           );
         })}
         
-        {items.length === 0 && !itemsLoading && (
+        {/* Сообщение если товаров нет */}
+        {filteredItems.length === 0 && !loading && (
           <div className="no-items">
-            <p>🎁 Товары временно отсутствуют</p>
-            <p>Загляните позже!</p>
+            <div className="no-items-icon">🛒</div>
+            <p>Товары в этой категории временно отсутствуют</p>
+            <p>Загляните позже или проверьте другие категории!</p>
           </div>
         )}
       </div>
 
+      {/* Специальные предложения */}
       <div className="shop-specials">
         <h3>⚡ Специальные предложения</h3>
         <div className="special-offers">
@@ -183,6 +223,11 @@ const Shop = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ✅ ДОБАВЛЕНО: информация о валюте */}
+      <div className="currency-info">
+        <p>💡 Золото можно заработать в кампаниях, а самоцветы - за достижения и покупки</p>
       </div>
     </div>
   );

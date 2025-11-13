@@ -1,4 +1,4 @@
-//только состояние текущей игры
+// store/slices/gameSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
 const config = {
@@ -9,7 +9,6 @@ const config = {
   maxCardValue: 10
 };
 
-// Генерируем уникальные ID для карт
 const generateCards = (count, isPlayer = true) => {
   const cards = [];
   const baseId = isPlayer ? 0 : 100;
@@ -19,8 +18,8 @@ const generateCards = (count, isPlayer = true) => {
       value: Math.floor(Math.random() * (config.maxCardValue - config.minCardValue + 1)) + config.minCardValue,
       health: 10,
       maxHealth: 10,
-      superAttack: 0, // Добавляем шкалу супер удара
-      hasUsedSuperAttack: false, // Отслеживаем использовался ли супер удар
+      superAttack: 0,
+      hasUsedSuperAttack: false,
       isPlayer: isPlayer
     });
   }
@@ -28,36 +27,30 @@ const generateCards = (count, isPlayer = true) => {
 };
 
 const initialState = {
-  playerCards: [],
-  enemyCards: [],
-  selectedPlayerCard: null,
-  selectedEnemyCard: null,
-  playerHealth: config.playerHealth,
-  enemyHealth: config.enemyHealth,
-  isPlayerTurn: true,
-  attackingCardId: null,
-  defendingCardId: null,
-  battleResult: null,
-  isBattleActive: true,
-  battleMode: 'manual',
-  showBattleResultModal: false,
-  // ✅ Конфиг игры
-  config: config,
-  
-  // ✅ ID для синхронизации с сервером
- 
-  // ✅ История игры
-  turns: [],
-  superAttackUsage: [],
-  serverBattleId: null, // ★★★ ДОБАВЛЕНО: ID битвы на сервере ★★★
-  turns: [], // ★★★ ДОБАВЛЕНО: история ходов ★★★
-  superAttackUsage: [] // ★★★ ДОБАВЛЕНО: использование супер атак ★★★
+   playerCards: [],
+   enemyCards: [],
+   selectedPlayerCard: null,
+   selectedEnemyCard: null,
+   playerHealth: config.playerHealth,
+   enemyHealth: config.enemyHealth,
+   isPlayerTurn: true,
+   attackingCardId: null,
+   defendingCardId: null,
+   battleResult: null,
+   isBattleActive: true,
+   battleMode: 'manual',
+   showBattleResultModal: false,
+   config: config,
+   serverBattleId: null,
+   turns: [],
+   superAttackUsage: []
 };
 
 export const gameSlice = createSlice({
   name: 'game',
   initialState,
   reducers: {
+    // Инициализация новой игры
     initGame: (state) => {
       state.playerCards = generateCards(state.config.cardCount, true);
       state.enemyCards = generateCards(state.config.cardCount, false);
@@ -72,44 +65,142 @@ export const gameSlice = createSlice({
       state.showBattleResultModal = false;
       state.battleResult = null;
       state.isBattleActive = true;
-      state.serverBattleId = null; // ★★★ ДОБАВЛЕНО: сброс ID битвы ★★★
-      state.turns = []; // ★★★ ДОБАВЛЕНО: сброс истории ходов ★★★
-      state.superAttackUsage = []; // ★★★ ДОБАВЛЕНО: сброс использования супер атак ★★★
+      state.serverBattleId = null;
+      state.turns = [];
+      state.superAttackUsage = [];
     },
 
-    resetGame: (state) => {
-      state.playerCards = generateCards(state.config.cardCount, true);
-      state.enemyCards = generateCards(state.config.cardCount, false);
-      state.selectedPlayerCard = null;
-      state.selectedEnemyCard = null;
-      state.playerHealth = state.config.playerHealth;
-      state.enemyHealth = state.config.enemyHealth;
-      state.isPlayerTurn = true;
-      state.attackingCardId = null;
-      state.defendingCardId = null;
-      state.battleMode = 'manual';
-      state.showBattleResultModal = false;
-      state.battleResult = null;
-      state.isBattleActive = true;
-      state.serverBattleId = null; // ★★★ ДОБАВЛЕНО: сброс ID битвы ★★★
-      state.turns = []; // ★★★ ДОБАВЛЕНО: сброс истории ходов ★★★
-      state.superAttackUsage = []; // ★★★ ДОБАВЛЕНО: сброс использования супер атак ★★★
+    // УДАЛЕНО: resetGame - дублирует initGame
+
+    // Экшен для атаки игрока
+    attack: (state, action) => {
+      const { playerCardId, enemyCardId, isSuperAttack = false } = action.payload;
+      
+      const playerCard = state.playerCards.find(card => card.id === playerCardId);
+      const enemyCard = state.enemyCards.find(card => card.id === enemyCardId);
+      
+      if (!playerCard || !enemyCard || playerCard.health <= 0 || enemyCard.health <= 0) {
+        return;
+      }
+      
+      state.attackingCardId = playerCardId;
+      state.defendingCardId = enemyCardId;
+      
+      let damage = playerCard.value;
+      if (isSuperAttack) {
+        damage *= 2;
+        playerCard.superAttack = 0;
+        playerCard.hasUsedSuperAttack = true;
+        
+        state.superAttackUsage.push({
+          cardId: playerCardId,
+          isPlayerCard: true,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        playerCard.superAttack = Math.min(100, playerCard.superAttack + 25);
+      }
+      
+      enemyCard.health = Math.max(0, enemyCard.health - damage);
+      
+      state.turns.push({
+        type: 'player_attack',
+        playerCardId,
+        enemyCardId,
+        damage,
+        isSuperAttack,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (enemyCard.health <= 0) {
+        enemyCard.health = 0;
+      }
+      
+      const aliveEnemyCards = state.enemyCards.filter(card => card.health > 0);
+      const alivePlayerCards = state.playerCards.filter(card => card.health > 0);
+      
+      if (aliveEnemyCards.length === 0) {
+        state.battleResult = 'victory';
+        state.isBattleActive = false;
+        state.showBattleResultModal = true;
+      } else if (alivePlayerCards.length === 0) {
+        state.battleResult = 'defeat';
+        state.isBattleActive = false;
+        state.showBattleResultModal = true;
+      } else {
+        state.isPlayerTurn = false;
+      }
     },
 
-    // ★★★ ДОБАВЛЕНО: Установка ID битвы с сервера ★★★
+    // Экшен для атаки противника (AI)
+    enemyAttack: (state) => {
+      if (state.isPlayerTurn || !state.isBattleActive) return;
+      
+      const aliveEnemyCards = state.enemyCards.filter(card => card.health > 0);
+      const alivePlayerCards = state.playerCards.filter(card => card.health > 0);
+      
+      if (aliveEnemyCards.length === 0 || alivePlayerCards.length === 0) return;
+      
+      const randomEnemyCard = aliveEnemyCards[Math.floor(Math.random() * aliveEnemyCards.length)];
+      const randomPlayerCard = alivePlayerCards[Math.floor(Math.random() * alivePlayerCards.length)];
+      
+      state.attackingCardId = randomEnemyCard.id;
+      state.defendingCardId = randomPlayerCard.id;
+      
+      const useSuperAttack = randomEnemyCard.superAttack >= 100;
+      
+      let damage = randomEnemyCard.value;
+      if (useSuperAttack) {
+        damage *= 2;
+        randomEnemyCard.superAttack = 0;
+        randomEnemyCard.hasUsedSuperAttack = true;
+        
+        state.superAttackUsage.push({
+          cardId: randomEnemyCard.id,
+          isPlayerCard: false,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        randomEnemyCard.superAttack = Math.min(100, randomEnemyCard.superAttack + 25);
+      }
+      
+      randomPlayerCard.health = Math.max(0, randomPlayerCard.health - damage);
+      
+      state.turns.push({
+        type: 'enemy_attack',
+        enemyCardId: randomEnemyCard.id,
+        playerCardId: randomPlayerCard.id,
+        damage,
+        isSuperAttack: useSuperAttack,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (randomPlayerCard.health <= 0) {
+        randomPlayerCard.health = 0;
+      }
+      
+      const aliveEnemyCardsAfter = state.enemyCards.filter(card => card.health > 0);
+      const alivePlayerCardsAfter = state.playerCards.filter(card => card.health > 0);
+      
+      if (alivePlayerCardsAfter.length === 0) {
+        state.battleResult = 'defeat';
+        state.isBattleActive = false;
+        state.showBattleResultModal = true;
+      } else if (aliveEnemyCardsAfter.length === 0) {
+        state.battleResult = 'victory';
+        state.isBattleActive = false;
+        state.showBattleResultModal = true;
+      } else {
+        state.isPlayerTurn = true;
+      }
+    },
+
     setServerBattleId: (state, action) => {
       state.serverBattleId = action.payload;
     },
 
-    // ★★★ ДОБАВЛЕНО: Добавление хода в историю ★★★
-    addTurn: (state, action) => {
-      state.turns.push(action.payload);
-    },
-
-    // ★★★ ДОБАВЛЕНО: Запись использования супер атаки ★★★
-    recordSuperAttack: (state, action) => {
-      state.superAttackUsage.push(action.payload);
-    },
+    // УДАЛЕНО: addTurn - дублируется в attack и enemyAttack
+    // УДАЛЕНО: recordSuperAttack - дублируется в attack и enemyAttack
 
     selectPlayerCard: (state, action) => {
       if (action.payload.health > 0) {
@@ -173,9 +264,9 @@ export const gameSlice = createSlice({
     },
 
     showBattleResultModal: (state, action) => {
-      console.log('showBattleResultModal вызван с результатом:', action.payload);
       state.showBattleResultModal = true;
       state.battleResult = action.payload;
+      state.isBattleActive = false;
     },
 
     hideBattleResultModal: (state) => {
@@ -188,12 +279,11 @@ export const gameSlice = createSlice({
       state.isPlayerTurn = true;
       state.attackingCardId = null;
       state.defendingCardId = null;
-      state.serverBattleId = null; // ★★★ ДОБАВЛЕНО: сброс ID битвы ★★★
-      state.turns = []; // ★★★ ДОБАВЛЕНО: сброс истории ходов ★★★
-      state.superAttackUsage = []; // ★★★ ДОБАВЛЕНО: сброс использования супер атак ★★★
+      state.serverBattleId = null;
+      state.turns = [];
+      state.superAttackUsage = [];
     },
 
-    // ★★★ НОВЫЕ ЭКШЕНЫ ДЛЯ СУПЕР УДАРА ★★★
     updateSuperAttack: (state, action) => {
       const { cardId, newSuperAttack, isPlayerCard } = action.payload;
       const cardArray = isPlayerCard ? 'playerCards' : 'enemyCards';
@@ -211,7 +301,6 @@ export const gameSlice = createSlice({
         card.superAttack = 0;
         card.hasUsedSuperAttack = true;
         
-        // ★★★ ДОБАВЛЕНО: Записываем использование супер атаки ★★★
         state.superAttackUsage.push({
           cardId: cardId,
           isPlayerCard: isPlayerCard,
@@ -234,10 +323,9 @@ export const gameSlice = createSlice({
 
 export const {
   initGame,
-  resetGame,
-  setServerBattleId, // ★★★ ДОБАВЛЕНО: экспорт нового экшена ★★★
-  addTurn, // ★★★ ДОБАВЛЕНО: экспорт нового экшена ★★★
-  recordSuperAttack, // ★★★ ДОБАВЛЕНО: экспорт нового экшена ★★★
+  attack,
+  enemyAttack,
+  setServerBattleId,
   selectPlayerCard,
   selectEnemyCard,
   updateCardHealth,

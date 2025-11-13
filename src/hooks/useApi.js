@@ -1,3 +1,4 @@
+// src/hooks/useApi.js
 import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -6,17 +7,16 @@ import {
   updateUser,
   fetchCampaigns,
   fetchCampaignProgress,
-  startCampaignLevel as startCampaignLevelAction,
-  completeCampaignLevel as completeCampaignLevelAction,
-  startCampaignBattle,
+  startCampaignLevel,
+  completeCampaignLevel,
   completeBattle,
   fetchAvailableQuests,
   updateQuestProgressAction,
   claimQuestRewardAction,
   fetchShopItems,
   purchaseItemAction,
-  fetchDailyReward,
-  claimDailyRewardAction,
+  getDailyRewardStatus, // thunk для получения статуса
+  claimDailyReward, // thunk для получения награды
   fetchExpeditions,
   startExpeditionAction,
   completeExpeditionAction,
@@ -51,20 +51,15 @@ export const useApi = () => {
     return dispatch(fetchCampaignProgress(userId));
   }, [dispatch]);
 
-  // Переименовали из-за конфликта имен
-  const startCampaignLevel = useCallback((levelData) => {
-    return dispatch(startCampaignLevelAction(levelData));
+  const startCampaignLevelAction = useCallback((levelData) => {
+    return dispatch(startCampaignLevel(levelData));
   }, [dispatch]);
 
-  const completeCampaignLevel = useCallback((completionData) => {
-    return dispatch(completeCampaignLevelAction(completionData));
+  const completeCampaignLevelAction = useCallback((completionData) => {
+    return dispatch(completeCampaignLevel(completionData));
   }, [dispatch]);
 
   // Battle methods
-  const startBattle = useCallback((battleData) => {
-    return dispatch(startCampaignBattle(battleData));
-  }, [dispatch]);
-
   const finishBattle = useCallback((battleId, result) => {
     return dispatch(completeBattle({ battleId, result }));
   }, [dispatch]);
@@ -91,15 +86,6 @@ export const useApi = () => {
     return dispatch(purchaseItemAction(purchaseData));
   }, [dispatch]);
 
-  // Daily Reward methods
-  const getDailyReward = useCallback((userId) => {
-    return dispatch(fetchDailyReward(userId));
-  }, [dispatch]);
-
-  const claimDailyReward = useCallback((userId) => {
-    return dispatch(claimDailyRewardAction(userId));
-  }, [dispatch]);
-
   // Expedition methods
   const getExpeditions = useCallback((userId) => {
     return dispatch(fetchExpeditions(userId));
@@ -122,6 +108,45 @@ export const useApi = () => {
     return dispatch(openFreeChestAction(userId));
   }, [dispatch]);
 
+  // Daily Rewards methods - ИСПРАВЛЕННЫЕ для поддержки обоих идентификаторов
+  const getDailyRewardStatusApi = useCallback((userIdentifier) => {
+    console.log('📞 useApi: getDailyRewardStatus для', userIdentifier);
+    
+    // Определяем тип идентификатора (telegramId или userId)
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userIdentifier);
+    
+    if (isUUID) {
+      // Если это UUID, используем userId
+      console.log('🆔 Используем userId для запроса');
+      // Здесь нужно будет изменить thunk или создать новый, который принимает userId
+      // Пока используем существующий thunk, но передаем userId как telegramId
+      // Это временное решение до обновления серверных роутов
+      return dispatch(getDailyRewardStatus(userIdentifier)).unwrap();
+    } else {
+      // Если это не UUID, используем как telegramId
+      console.log('📱 Используем telegramId для запроса');
+      return dispatch(getDailyRewardStatus(userIdentifier)).unwrap();
+    }
+  }, [dispatch]);
+
+  const claimDailyRewardApi = useCallback((userIdentifier, rewardType) => {
+    console.log('📞 useApi: claimDailyReward', { userIdentifier, rewardType });
+    
+    // Определяем тип идентификатора
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userIdentifier);
+    
+    if (isUUID) {
+      // Если это UUID, используем userId
+      console.log('🆔 Используем userId для claim');
+      // Временно передаем userId как telegramId
+      return dispatch(claimDailyReward({ telegramId: userIdentifier, rewardType })).unwrap();
+    } else {
+      // Если это не UUID, используем как telegramId
+      console.log('📱 Используем telegramId для claim');
+      return dispatch(claimDailyReward({ telegramId: userIdentifier, rewardType })).unwrap();
+    }
+  }, [dispatch]);
+
   return {
     // Серверные данные
     campaigns: apiState.campaigns,
@@ -132,28 +157,30 @@ export const useApi = () => {
     // Клиентские данные
     user: appState.user,
     cards: appState.cards,
-    
+    apiState,
+
     // Methods
     loadUser,
     loadUserCards,
     saveUser,
     loadCampaigns,
     loadCampaignProgress,
-    startCampaignLevel,
-    completeCampaignLevel,
-    startBattle,
+    startCampaignLevel: startCampaignLevelAction,
+    completeCampaignLevel: completeCampaignLevelAction,
     finishBattle,
     getAvailableQuests,
     updateQuestProgress,
     claimQuestReward,
     getShopItems,
     purchaseItem,
-    getDailyReward,
-    claimDailyReward,
     getExpeditions,
     startExpedition,
     completeExpedition,
     getFreeChestStatus,
-    openFreeChest
+    openFreeChest,
+    
+    // Ежедневные награды - исправленные функции
+    getDailyRewardStatus: getDailyRewardStatusApi,
+    claimDailyReward: claimDailyRewardApi,
   };
 };

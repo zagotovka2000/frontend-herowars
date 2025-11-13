@@ -1,19 +1,23 @@
+// store/slices/navigationSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
+// Начальное состояние навигации
 const initialState = {
-  currentScreen: 'main-map',
-  history: ['main-map']
+  currentScreen: 'main-map', // Текущий активный экран
+  history: ['main-map']      // История навигации для кнопки "назад"
 };
 
 export const navigationSlice = createSlice({
   name: 'navigation',
   initialState,
   reducers: {
+    // Навигация на указанный экран с добавлением в историю
     navigateTo: (state, action) => {
       state.currentScreen = action.payload;
       state.history.push(action.payload);
     },
     
+    // Навигация назад по истории
     navigateBack: (state) => {
       if (state.history.length > 1) {
         state.history.pop();
@@ -21,11 +25,13 @@ export const navigationSlice = createSlice({
       }
     },
     
+    // Замена текущего экрана без добавления в историю
     navigateReplace: (state, action) => {
       state.currentScreen = action.payload;
       state.history[state.history.length - 1] = action.payload;
     },
     
+    // Сброс навигации на главный экран
     resetToMain: (state) => {
       state.currentScreen = 'main-map';
       state.history = ['main-map'];
@@ -40,7 +46,7 @@ export const {
   resetToMain
 } = navigationSlice.actions;
 
-// Селекторы
+// Селекторы для доступа к состоянию навигации
 export const selectCurrentScreen = (state) => state.navigation.currentScreen;
 export const selectCanGoBack = (state) => state.navigation.history.length > 1;
 

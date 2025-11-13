@@ -15,25 +15,20 @@ import Expedition from './components/Expedition/Expedition';
 import './App.css'
 import { fetchUser,fetchCampaigns } from './store/slices/apiSlice';
 
-
 function AppContent() {
    const dispatch = useAppDispatch();
    const currentScreen = useAppSelector(selectCurrentScreen);
    const user = useAppSelector(state => state.app.user);
-   console.log(" AppContent user:", user)
    const apiLoading = useAppSelector(state => state.api.loading);
-   console.log('🔍 AppContent - currentScreen:', currentScreen);
    const apiError = useAppSelector(state => state.api.error);
    const [initialLoad, setInitialLoad] = useState(true);
-  
+   console.log('Текущий экран:', currentScreen);
 
    // Загружаем пользователя при монтировании компонента
    useEffect(() => {
       const loadUser = async () => {
          try {
-           console.log('🚀 Инициализация приложения...');
            await dispatch(fetchUser('987654321')).unwrap();
-           console.log('✅ Приложение успешно инициализировано');
          } catch (error) {
            console.error('❌ Ошибка инициализации приложения:', error);
          } finally {
@@ -42,7 +37,6 @@ function AppContent() {
        };
 
    if (!user) {
-      console.log('=====41=====');
      loadUser();
    } else {
      setInitialLoad(false);
@@ -52,12 +46,11 @@ function AppContent() {
   // Загружаем кампании после загрузки пользователя
   useEffect(() => {
    if (user && user.id && !initialLoad) {
-     console.log('📋 Загружаем кампании для пользователя:', user.id);
      dispatch(fetchCampaigns(user.id));
    }
  }, [user, initialLoad, dispatch]);
- const renderScreen = () => {
 
+ const renderScreen = () => {
    switch (currentScreen) {
      case 'campaign': return <Campaign user={user}/>;
      case 'arena': return <Arena />;
@@ -83,9 +76,8 @@ if (initialLoad) {
      </div>
    );
 }
-console.log(1111)
 
- // Показываем ошибку, если есть
+ // Показываем ошибку, если есть и пользователь не загружен
  if (apiError && !user) {
    return (
      <div className="app">
@@ -101,7 +93,7 @@ console.log(1111)
    );
  }
 
- // Показываем загрузку, если данные еще грузятся
+ // Показываем загрузку, если данные еще грузятся и пользователь не загружен
  if (apiLoading && !user) {
    return (
      <div className="app">
@@ -112,10 +104,6 @@ console.log(1111)
      </div>
    );
  }
-
-
-
-
 
   return (
     <div className="app">

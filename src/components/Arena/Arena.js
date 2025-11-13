@@ -11,6 +11,7 @@ const Arena = () => {
   const dispatch = useAppDispatch();
   const [battleInitialized, setBattleInitialized] = useState(false);
 
+  // Эффект для инициализации битвы при монтировании компонента
   useEffect(() => {
     // ✅ Инициализируем битву только один раз
     if (!battleInitialized) {
@@ -20,6 +21,7 @@ const Arena = () => {
     }
   }, [dispatch, battleInitialized]);
 
+  // Обработчик выхода из арены
   const handleExit = () => {
     console.log('🎮 Выход из арены');
     dispatch(navigateBack());

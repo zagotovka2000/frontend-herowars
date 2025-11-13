@@ -1,3 +1,4 @@
+// src/components/Card/Card.js
 import React from 'react';
 import { useAppSelector } from '../../store/hooks';
 import './Card.css';
@@ -13,16 +14,19 @@ const Card = ({
 }) => {
   const gameState = useAppSelector(state => state.game);
   
+  // Флаги для анимаций
   const isAttacking = gameState.attackingCardId === card.id;
   const isDefending = gameState.defendingCardId === card.id;
   const isSuperAttackReady = card.superAttack >= 100;
 
+  // Обработчик клика по карте
   const handleClick = () => {
     if (onClick && !isDefeated && card.health > 0) {
       onClick(card);
     }
   };
 
+  // Формирование классов для wrapper
   const wrapperClasses = [
     'card-wrapper',
     type,
@@ -51,7 +55,7 @@ const Card = ({
         </div>
       )}
       
-      {/* Полоска супер удара снизу */}
+      {/* Полоска супер атаки снизу */}
       {card.health > 0 && (
         <div className="super-attack-bar-container">
           <div className="super-attack-bar">

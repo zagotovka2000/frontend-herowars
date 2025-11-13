@@ -1,3 +1,4 @@
+// src/components/Common/LoadingState.js
 import React from 'react';
 import './LoadingState.css';
 
@@ -8,6 +9,7 @@ const LoadingState = ({
   progress,
   className = '' 
 }) => {
+  // Функция для получения иконки в зависимости от типа
   const getSpinnerIcon = () => {
     switch (type) {
       case 'success':
@@ -16,6 +18,8 @@ const LoadingState = ({
         return '⚠️';
       case 'danger':
         return '❌';
+      case 'info':
+        return 'ℹ️';
       default:
         return '⏳';
     }
@@ -23,31 +27,41 @@ const LoadingState = ({
 
   return (
     <div className={`loading-state ${size} ${type} ${className}`}>
+      {/* Спиннер/иконка */}
       <div className="loading-spinner">{getSpinnerIcon()}</div>
+      
+      {/* Сообщение загрузки */}
       <p className="loading-message">{message}</p>
+      
+      {/* Прогресс-бар если передан progress */}
       {progress !== undefined && (
         <div className="loading-progress">
           <div 
             className="loading-progress-bar" 
-            style={{ width: `${progress}%` }}
+            style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
           />
+          <span className="progress-text">{progress}%</span>
         </div>
       )}
     </div>
   );
 };
-// Простая загрузка
-{/* <LoadingState />
 
-// Загрузка с прогрессом
-<LoadingState message="Загрузка данных..." progress={75} />
+// Примеры использования:
+// 
+// Простая загрузка:
+// <LoadingState />
+//
+// Загрузка с прогрессом:
+// <LoadingState message="Загрузка данных..." progress={75} />
+//
+// Большая загрузка:
+// <LoadingState size="large" message="Пожалуйста, подождите" />
+//
+// Успешное состояние:
+// <LoadingState type="success" message="Данные успешно загружены" />
+//
+// Ошибка:
+// <LoadingState type="danger" message="Ошибка загрузки" />
 
-// Большая загрузка
-<LoadingState size="large" message="Пожалуйста, подождите" />
-
-// Ошибка с повторной попыткой
-<ErrorState error="Не удалось загрузить данные" onRetry={fetchData} />
-
-// Предупреждение
-<ErrorState type="warning" error="Это действие нельзя отменить" /> */}
 export default LoadingState;
