@@ -117,40 +117,78 @@ export const fetchCampaignProgress = createAsyncThunk(
   }
 );
 
-export const startCampaignLevel = createAsyncThunk(
-  'api/startCampaignLevel',
-  async (levelData, { rejectWithValue }) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/campaigns/level/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(levelData)
-      });
-      if (!response.ok) throw new Error('Failed to start campaign level');
-      return await response.json();
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
+// В apiSlice.js - ЗАМЕНИТЬ мок-данные на реальные запросы:
 
-export const completeCampaignLevel = createAsyncThunk(
-  'api/completeCampaignLevel',
-  async (completionData, { rejectWithValue }) => {
-    try {
-      const { levelId, ...data } = completionData;
-      const response = await fetch(`${API_BASE_URL}/campaigns/level/${levelId}/claim`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!response.ok) throw new Error('Failed to complete campaign level');
-      return await response.json();
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
+export const startCampaignLevel = createAsyncThunk(
+   'api/startCampaignLevel',
+   async (levelData, { rejectWithValue }) => {
+     try {
+       console.log("🚀 Отправка реального запроса startCampaignLevel:", levelData);
+       
+       const response = await fetch(`${API_BASE_URL}/campaigns/level/start`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(levelData)
+       });
+       
+       if (!response.ok) {
+         let errorMessage = `Ошибка сервера: ${response.status}`;
+         try {
+           const errorData = await response.json();
+           errorMessage += ` - ${errorData.error}`;
+         } catch (e) {
+           const errorText = await response.text();
+           errorMessage += ` - ${errorText}`;
+         }
+         throw new Error(errorMessage);
+       }
+       
+       const result = await response.json();
+       console.log("✅ Реальный ответ сервера:", result);
+       return result;
+       
+     } catch (error) {
+       console.error('❌ Ошибка в startCampaignLevel thunk:', error);
+       return rejectWithValue(error.message);
+     }
+   }
+ );
+ 
+ export const completeCampaignLevel = createAsyncThunk(
+   'api/completeCampaignLevel',
+   async (completionData, { rejectWithValue }) => {
+     try {
+       const { levelId, ...data } = completionData;
+       console.log("🚀 Отправка реального запроса completeCampaignLevel:", { levelId, data });
+       
+       const response = await fetch(`${API_BASE_URL}/campaigns/level/${levelId}/claim`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(data)
+       });
+       
+       if (!response.ok) {
+         let errorMessage = `Ошибка сервера: ${response.status}`;
+         try {
+           const errorData = await response.json();
+           errorMessage += ` - ${errorData.error}`;
+         } catch (e) {
+           const errorText = await response.text();
+           errorMessage += ` - ${errorText}`;
+         }
+         throw new Error(errorMessage);
+       }
+       
+       const result = await response.json();
+       console.log("✅ Реальный ответ сервера:", result);
+       return result;
+       
+     } catch (error) {
+       console.error('❌ Ошибка в completeCampaignLevel thunk:', error);
+       return rejectWithValue(error.message);
+     }
+   }
+ );
 
 export const completeBattle = createAsyncThunk(
   'api/completeBattle',

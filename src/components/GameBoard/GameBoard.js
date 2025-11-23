@@ -8,9 +8,8 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { useBattle } from '../../hooks/useBattle';
 import { enemyAttack, clearAnimation } from '../../store/slices/gameSlice';
 import './GameBoard.css';
-import BattleResultModal from '../Common/BattleResultModal';
 
-const GameBoard = ({ onScreenChange }) => {
+const GameBoard = ({ onBattleEnd }) => { // ✅ ДОБАВЛЕНО: принимаем onBattleEnd пропс
   const dispatch = useAppDispatch();
   const gameState = useAppSelector(state => state.game);
 
@@ -19,12 +18,71 @@ const GameBoard = ({ onScreenChange }) => {
     closeBattleResultModal 
   } = useBattle();
 
+  // ✅ ДОБАВЛЕНО: Эффект для определения конца битвы
+  useEffect(() => {
+    if (!gameState.isBattleActive) return;
+
+    const playerAlive = gameState.playerCards.some(card => card.health > 0);
+    const enemyAlive = gameState.enemyCards.some(card => card.health > 0);
+
+    console.log('🎯 Проверка состояния битвы:', { 
+      playerAlive, 
+      enemyAlive,
+      playerCards: gameState.playerCards.map(c => ({id: c.id, health: c.health})),
+      enemyCards: gameState.enemyCards.map(c => ({id: c.id, health: c.health}))
+    });
+    const battleEnded = !playerAlive || !enemyAlive;
+
+    if (battleEnded) {
+      const isVictory = !enemyAlive && playerAlive;
+      console.log('🏁 Битва завершена! Результат:', isVictory ? 'ПОБЕДА' : 'ПОРАЖЕНИЕ');
+      if (isVictory) {
+         dispatch(setBattleResult('victory'));
+         dispatch(showBattleResultModal(true));
+       } else {
+         dispatch(setBattleResult('defeat'));
+         dispatch(showBattleResultModal(true));
+       }
+      // Вызываем колбэк завершения битвы
+      if (onBattleEnd) {
+        onBattleEnd(isVictory);
+      }
+    }
+  }, [gameState.playerCards, gameState.enemyCards, gameState.isBattleActive, onBattleEnd]);
+  
+// В GameBoard.js - улучшенный эффект для определения конца битвы
+useEffect(() => {
+   if (!gameState.isBattleActive) return;
+ 
+   const playerAlive = gameState.playerCards.some(card => card.health > 0);
+   const enemyAlive = gameState.enemyCards.some(card => card.health > 0);
+ 
+   console.log('🎯 Проверка состояния битвы:', { 
+     playerAlive, 
+     enemyAlive,
+     playerCards: gameState.playerCards.map(c => ({id: c.id, health: c.health})),
+     enemyCards: gameState.enemyCards.map(c => ({id: c.id, health: c.health}))
+   });
+ 
+   // ✅ ИСПРАВЛЕНО: Более точная проверка конца битвы
+   const battleEnded = !playerAlive || !enemyAlive;
+   
+   if (battleEnded) {
+     const isVictory = !enemyAlive && playerAlive; // Победа если враги мертвы, а игрок жив
+     console.log('🏁 Битва завершена! Результат:', isVictory ? 'ПОБЕДА' : 'ПОРАЖЕНИЕ');
+     
+     // Вызываем колбэк завершения битвы
+     if (onBattleEnd) {
+       onBattleEnd(isVictory);
+     }
+   }
+ }, [gameState.playerCards, gameState.enemyCards, gameState.isBattleActive, onBattleEnd]);
   // Эффект для очистки анимации через время
   useEffect(() => {
     if (gameState.attackingCardId || gameState.defendingCardId) {
       const timer = setTimeout(() => {
         dispatch(clearAnimation());
-      }, 600); // Время должно совпадать с длительностью CSS-анимации
+      }, 600);
       
       return () => clearTimeout(timer);
     }
@@ -67,13 +125,6 @@ const GameBoard = ({ onScreenChange }) => {
       </div>
       
       <PlayerField />
-      
-      <BattleResultModal 
-        isOpen={gameState.showBattleResultModal}
-        onClose={closeBattleResultModal}
-        isVictory={gameState.battleResult === 'victory'}
-        onScreenChange={onScreenChange}
-      />
     </div>
   );
 };

@@ -1,5 +1,5 @@
 // src/components/Common/BattleResultModal.js
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppDispatch } from '../../store/hooks';
 import { hideBattleResultModal } from '../../store/slices/gameSlice';
 import './BattleResultModal.css';
@@ -9,16 +9,41 @@ const BattleResultModal = ({
   onClose, 
   isVictory, 
   onBattleComplete,
-  showContinueButton = true 
+  showContinueButton = true,
+  rewards = null // Новый пропс для наград
 }) => {
+  
   const dispatch = useAppDispatch();
+  const [showItems, setShowItems] = useState(false);
+  const [hasHandledComplete, setHasHandledComplete] = useState(false);
 
-  // Эффект для обработки завершения битвы при открытии модального окна
   useEffect(() => {
-    if (isOpen && onBattleComplete) {
-      onBattleComplete(isVictory);
-    }
-  }, [isOpen, isVictory, onBattleComplete]);
+   if (isOpen && isVictory && onBattleComplete && !hasHandledComplete) {
+     console.log('🏆 BattleResultModal: Вызов onBattleComplete');
+     setHasHandledComplete(true);
+     onBattleComplete(isVictory);
+   }
+ }, [isOpen, isVictory, onBattleComplete, hasHandledComplete]);
+
+
+  useEffect(() => {
+   if (!isOpen) {
+     setHasHandledComplete(false);
+     setShowItems(false);
+   }
+ }, [isOpen]);
+  // Эффект для показа предметов с задержкой
+  useEffect(() => {
+    if (isOpen && isVictory && rewards && rewards.items && rewards.items.length > 0) {
+      const timer = setTimeout(() => {
+        setShowItems(true);
+      }, 500);
+      return () => clearTimeout(timer);
+   } else {
+      setShowItems(false);
+   }
+}, [isOpen, isVictory, rewards]);
+console.log(" rewards:", rewards)
 
   // Обработчик закрытия модального окна
   const handleClose = () => {
@@ -71,15 +96,62 @@ const BattleResultModal = ({
           {data.message}
         </p>
         
-        {/* Дополнительная информация для победы */}
-        {isVictory && (
-          <div className="campaign-rewards">
-            <h3>Уровень пройден!</h3>
-            <div className="rewards-tip">
-              Следующий уровень теперь доступен
+        {/* Награды за победу */}
+{isVictory && rewards && (
+  <div className="campaign-rewards">
+    <h3>Полученные награды:</h3>
+    
+    {/* ✅ ЗАЩИТА ОТ ОТСУТСТВИЯ ДАННЫХ */}
+    <div className="basic-rewards">
+      {(rewards.gold > 0 || rewards.gold === 0) && (
+        <div className="reward-item gold">
+          <span className="reward-icon">💰</span>
+          <span className="reward-text">+{rewards.gold} золота</span>
+        </div>
+      )}
+      {(rewards.experience > 0 || rewards.experience === 0) && (
+        <div className="reward-item exp">
+          <span className="reward-icon">⭐</span>
+          <span className="reward-text">+{rewards.experience} опыта</span>
+        </div>
+      )}
+    </div>
+
+    {/* ✅ ЗАЩИТА ОТ ОТСУТСТВИЯ ПРЕДМЕТОВ */}
+    {showItems && rewards.items && Array.isArray(rewards.items) && rewards.items.length > 0 && (
+      <div className="item-rewards">
+        <h4>🎁 Полученные предметы:</h4>
+        <div className="items-grid">
+          {rewards.items.map((item, index) => (
+            <div 
+              key={index} 
+              className={`item-reward ${item.color || 'gray'}`}
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <div className="item-image-container">
+                <img 
+                  src={item.imageUrl || `/images/items/${item.color || 'gray'}/default.png`} 
+                  alt={item.name || 'Предмет'}
+                  className="item-image"
+                  onError={(e) => {
+                    e.target.src = '/images/items/default.png';
+                  }}
+                />
+                {item.quantity > 1 && (
+                  <div className="item-quantity">x{item.quantity}</div>
+                )}
+              </div>
+              <div className="item-name">{item.name || 'Неизвестный предмет'}</div>
+              {item.description && (
+                <div className="item-description">{item.description}</div>
+              )}
             </div>
-          </div>
-        )}
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+)}
         
         {/* Кнопка продолжения */}
         {showContinueButton && (

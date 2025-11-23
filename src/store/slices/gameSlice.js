@@ -43,7 +43,11 @@ const initialState = {
    config: config,
    serverBattleId: null,
    turns: [],
-   superAttackUsage: []
+   superAttackUsage: [],
+   // ✅ ДОБАВЛЕНО: новые поля для данных битвы
+   battleType: null, // 'campaign', 'pvp', 'training'
+   currentLevel: null, // текущий уровень кампании
+   rewards: null,
 };
 
 export const gameSlice = createSlice({
@@ -68,9 +72,8 @@ export const gameSlice = createSlice({
       state.serverBattleId = null;
       state.turns = [];
       state.superAttackUsage = [];
+      // ✅ ДОБАВЛЕНО: НЕ сбрасываем battleType, currentLevel, onBattleComplete при initGame
     },
-
-    // УДАЛЕНО: resetGame - дублирует initGame
 
     // Экшен для атаки игрока
     attack: (state, action) => {
@@ -199,9 +202,6 @@ export const gameSlice = createSlice({
       state.serverBattleId = action.payload;
     },
 
-    // УДАЛЕНО: addTurn - дублируется в attack и enemyAttack
-    // УДАЛЕНО: recordSuperAttack - дублируется в attack и enemyAttack
-
     selectPlayerCard: (state, action) => {
       if (action.payload.health > 0) {
         state.selectedPlayerCard = action.payload;
@@ -253,7 +253,9 @@ export const gameSlice = createSlice({
       state.attackingCardId = action.payload.attackingCardId;
       state.defendingCardId = action.payload.defendingCardId;
     },
-
+    setRewards: (state, action) => {
+      state.rewards = action.payload;
+    },
     clearAnimation: (state) => {
       state.attackingCardId = null;
       state.defendingCardId = null;
@@ -282,6 +284,10 @@ export const gameSlice = createSlice({
       state.serverBattleId = null;
       state.turns = [];
       state.superAttackUsage = [];
+      // ✅ ДОБАВЛЕНО: Очищаем данные битвы при скрытии модального окна
+      state.battleType = null;
+      state.currentLevel = null;
+      state.onBattleComplete = null;
     },
 
     updateSuperAttack: (state, action) => {
@@ -317,6 +323,18 @@ export const gameSlice = createSlice({
         card.superAttack = 0;
         card.hasUsedSuperAttack = false;
       }
+    },
+
+    // ✅ ДОБАВЛЕНО: Установка данных битвы
+    setBattleData: (state, action) => {
+      state.battleType = action.payload.battleType;
+      state.currentLevel = action.payload.currentLevel;
+    },
+
+    // ✅ ДОБАВЛЕНО: Очистка данных битвы
+    clearBattleData: (state) => {
+      state.battleType = null;
+      state.currentLevel = null;
     }
   },
 });
@@ -341,7 +359,9 @@ export const {
   hideBattleResultModal,
   updateSuperAttack,
   useSuperAttack,
-  resetSuperAttack
+  resetSuperAttack,
+  setBattleData,
+  clearBattleData
 } = gameSlice.actions;
 
 export default gameSlice.reducer;

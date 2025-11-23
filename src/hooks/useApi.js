@@ -29,10 +29,19 @@ export const useApi = () => {
   const apiState = useSelector(state => state.api);
   const appState = useSelector(state => state.app);
 
-  // User methods
-  const loadUser = useCallback((telegramId) => {
-    return dispatch(fetchUser(telegramId));
-  }, [dispatch]);
+  const handleApiError = useCallback((error, context) => {
+   console.error(`❌ Ошибка в ${context}:`, error);
+   // Можно добавить уведомления для пользователя
+ }, []);
+
+ const loadUser = useCallback(async (telegramId) => {
+   try {
+     return await dispatch(fetchUser(telegramId)).unwrap();
+   } catch (error) {
+     handleApiError(error, 'loadUser');
+     throw error;
+   }
+ }, [dispatch, handleApiError]);
 
   const loadUserCards = useCallback((userId) => {
     return dispatch(fetchUserCards(userId));

@@ -9,12 +9,21 @@ const initialState = {
 
 export const navigationSlice = createSlice({
   name: 'navigation',
-  initialState,
+  initialState: {
+   currentScreen: 'main-map',
+   history: ['main-map'],
+   screenParams: {} // ✅ ДОБАВЛЕНО: параметры экранов
+ },
   reducers: {
     // Навигация на указанный экран с добавлением в историю
     navigateTo: (state, action) => {
-      state.currentScreen = action.payload;
-      state.history.push(action.payload);
+      const { screen, params } = typeof action.payload === 'object' 
+        ? action.payload 
+        : { screen: action.payload, params: {} };
+      
+      state.currentScreen = screen;
+      state.history.push(screen);
+      state.screenParams[screen] = params; // ✅ Сохраняем параметры
     },
     
     // Навигация назад по истории
@@ -49,5 +58,6 @@ export const {
 // Селекторы для доступа к состоянию навигации
 export const selectCurrentScreen = (state) => state.navigation.currentScreen;
 export const selectCanGoBack = (state) => state.navigation.history.length > 1;
+export const selectScreenParams = (state) => state.navigation.screenParams;
 
 export default navigationSlice.reducer;

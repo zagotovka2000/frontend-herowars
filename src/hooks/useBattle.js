@@ -18,28 +18,43 @@ export const useBattle = () => {
   const dispatch = useAppDispatch();
   const gameState = useAppSelector(state => state.game);
   const { startCampaignLevel, completeCampaignLevel } = useApi();
+  const user = useAppSelector(state => state.app.user);
  
-  // ✅ ДОБАВЛЕНО: ref для хранения AbortController
+  // ✅ ref для хранения AbortController
   const abortControllerRef = useRef(null);
-  // Функция для начала битвы кампании
-  const startCampaignBattle = async (userId, levelId, userEnergy) => {
-    try {
-           // ✅ ИСПРАВЛЕНО: отменяем предыдущий запрос если есть
-           if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-          }
-                // Создаем новый AbortController
-      abortControllerRef.current = new AbortController();
-      console.log('⚡ Начинаем битву кампании:', { userId, levelId, userEnergy });
-      
-      // ✅ ИСПРАВЛЕНО: используем useApi вместо прямого fetch
-      const result = await startCampaignLevel({
-        userId,
-        levelId, 
-        userEnergy
-      }).unwrap();
 
-      console.log('✅ Битва начата:', result);
+  // Функция для начала битвы кампании
+  const startCampaignBattle = async (userId, levelId) => {
+    try {
+      console.log('⚡ Начинаем битву кампании:', { userId, levelId });
+    
+    // ✅ ДОБАВЛЕНО: Логируем данные перед отправкой
+    const requestData = {
+      userId: userId,
+      levelId: levelId
+    };
+    
+    console.log('📤 Отправляемые данные:', requestData);
+    
+    const result = await startCampaignLevel(requestData).unwrap();
+
+    console.log('✅ Битва начата:', result);
+    
+    if (result.battleId) {
+      dispatch(setServerBattleId(result.battleId));
+    }
+    
+    dispatch(initGame());
+    
+      // ✅ Отменяем предыдущий запрос если есть
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      
+      // Создаем новый AbortController
+      abortControllerRef.current = new AbortController();
+      console.log('⚡ Начинаем битву кампании:', { userId, levelId });
+     
       
       // Устанавливаем ID битвы на сервере
       if (result.battleId) {
@@ -51,39 +66,63 @@ export const useBattle = () => {
       
       return result;
     } catch (error) {
-      // ✅ ИСПРАВЛЕНО: не логируем ошибку если запрос был отменен
+      // ✅ Не логируем ошибку если запрос был отменен
       if (error.name !== 'AbortError') {
         console.error('❌ Ошибка начала битвы:', error);
       }
       throw error;
     }
   };
-  // ✅ ДОБАВЛЕНО: функция для очистки (можно вызывать при unmount)
+
+  // ✅ Функция для очистки (можно вызывать при unmount)
   const cleanup = () => {
-   if (abortControllerRef.current) {
-     abortControllerRef.current.abort();
-   }
- };
-  // Функция для завершения битвы кампании
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  };
+
+  // Функция для завершения битвы кампании с получением наград
   const completeCampaignBattle = async (levelId, isVictory) => {
+   console.log('⚔️ useBattle: completeCampaignBattle вызван', { levelId, isVictory });
+
     try {
-      const userId = '1'; // ❌ ПРОБЛЕМА: хардкод, нужно получать из состояния
+      const userId = user?.id;
       
+      if (!userId) {
+        throw new Error('User ID not found');
+      }
+
       if (isVictory) {
-        // ✅ ИСПРАВЛЕНО: используем useApi вместо прямого fetch
+        // ✅ Используем useApi вместо прямого fetch
         const result = await completeCampaignLevel({ 
-          levelId, 
-          userId, 
-          stars: 3, 
-          score: 1000 
-        }).unwrap();
+         levelId, 
+         userId, 
+         stars: 3, 
+         score: 1000 
+       }).unwrap();
+       
+       console.log('📦 Полный ответ сервера:', result);
+       
+       const rewards = {
+         gold: result.rewards?.gold || result.gold || 0,
+         experience: result.rewards?.experience || result.exp || 0,
+         items: result.rewards?.items || result.items || []
+       };
+       
+       console.log('🎁 Сформированные награды для отображения:', rewards);
+       
+       dispatch(setBattleResult('victory'));
+       dispatch(showBattleResultModal(true));
         
-        dispatch(setBattleResult('victory'));
-        dispatch(showBattleResultModal(true));
-        return result;
+        // Возвращаем результат с наградами
+        return {
+          ...result,
+          rewards
+        };
       } else {
         dispatch(setBattleResult('defeat'));
         dispatch(showBattleResultModal(true));
+        return { success: false };
       }
     } catch (error) {
       console.error('Ошибка завершения битвы:', error);
@@ -144,6 +183,7 @@ export const useBattle = () => {
     autoPlayerAttack,
     toggleBattleMode,
     closeBattleResultModal,
+    cleanup,
     battleMode: gameState.battleMode,
     isPlayerTurn: gameState.isPlayerTurn,
     isBattleActive: gameState.isBattleActive

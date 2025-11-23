@@ -1,5 +1,5 @@
 // src/components/Campaign/Campaign.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef,useMemo,useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { navigateTo } from '../../store/slices/navigationSlice';
 import BackButton from '../Common/BackButton';
@@ -11,6 +11,7 @@ import './Campaign.css';
 import { useApi } from '../../hooks/useApi';
 import { useBattle } from '../../hooks/useBattle';
 import { useGameEvents } from '../../hooks/useGameEvents';
+import { setBattleData } from '../../store/slices/gameSlice'; 
 
 const Campaign = () => {
   const dispatch = useAppDispatch();
@@ -30,8 +31,10 @@ const Campaign = () => {
   const [currentLevel, setCurrentLevel] = useState(null);
   const [showEnergyModal, setShowEnergyModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [battleRewards, setBattleRewards] = useState(null); // ✅ ДОБАВЛЕНО: объявление состояния
+  console.log(" Campaign battleRewards:", battleRewards)
 
-  // ✅ ДОБАВЛЕНО: useRef для отслеживания mounted состояния
+  // ✅ useRef для отслеживания mounted состояния
   const isMounted = useRef(true);
 
   // Массив эмодзи для уровней
@@ -40,13 +43,10 @@ const Campaign = () => {
     '❄️', '🔥', '☁️', '🌑', '👑'
   ];
 
-  // ✅ ИСПРАВЛЕНО: useEffect с cleanup функцией
+  // ✅ useEffect с cleanup функцией
   useEffect(() => {
-    // Устанавливаем флаг mounted при монтировании
     isMounted.current = true;
-
     return () => {
-      // Сбрасываем флаг при размонтировании
       isMounted.current = false;
     };
   }, []);
@@ -70,12 +70,10 @@ const Campaign = () => {
     try {
       setLoading(true);
       
-      // ✅ ИСПРАВЛЕНО: проверяем mounted перед обновлением состояния
       const campaignsData = await loadCampaigns(user.id);
       const progressData = await loadCampaignProgress(user.id);
       
       if (isMounted.current) {
-        // Обновляем состояние только если компонент еще mounted
         setLoading(false);
       }
     } catch (error) {
@@ -96,16 +94,18 @@ const Campaign = () => {
   };
 
   // Функция проверки доступности уровня
-  const isLevelAvailable = (level) => {
-    const completedLevels = getCompletedLevels();
-    
-    // Первый уровень всегда доступен
-    if (level.levelNumber === 1) return true;
-    
-    // Уровень доступен если предыдущий завершен
-    const previousLevel = currentCampaign.levels.find(l => l.levelNumber === level.levelNumber - 1);
-    return previousLevel && completedLevels.includes(previousLevel.id);
-  };
+  const completedLevels = useMemo(() => {
+   if (!currentCampaign || !campaignProgress[currentCampaign.id]) return [];
+   return campaignProgress[currentCampaign.id].levels
+     .filter(progress => progress.completed)
+     .map(progress => progress.levelId) || [];
+ }, [currentCampaign, campaignProgress]);
+ 
+ const isLevelAvailable = useCallback((level) => {
+   if (level.levelNumber === 1) return true;
+   const previousLevel = currentCampaign.levels.find(l => l.levelNumber === level.levelNumber - 1);
+   return previousLevel && completedLevels.includes(previousLevel.id);
+ }, [currentCampaign, completedLevels]);
 
   // Функция получения статуса уровня
   const getLevelStatus = (level) => {
@@ -132,20 +132,63 @@ const Campaign = () => {
       setShowCardModal(true);
     }
   };
+  // Обработчик завершения битвы с системой выдачи предметов
+  const handleBattleComplete = async (isVictory) => {
+   if (isVictory && currentLevel) {
+     try {
+       // Завершаем битву и получаем награды
+       const battleResult = await completeCampaignBattle(currentLevel.id, true);
+       console.log(" handleBattleComplete battleResult:", battleResult)
+       console.log('🎯 Завершение битвы, уровень:', currentLevel.id);
+
+       // ✅ Устанавливаем награды для отображения в модальном окне
+       if (battleResult && battleResult.rewards) {
+        console.log('🎁 Полученные награды:', battleResult.rewards);
+         setBattleRewards(battleResult.rewards);
+       }
+       else {
+        console.warn('⚠️ Награды не получены в ответе');
+      }
+       // Обновляем прогресс
+       await loadCampaignProgress(user.id);
+       
+       // Обрабатываем игровые события
+       await handleGameEvent(true, 'campaign');
+     } catch (error) {
+       console.error('Ошибка завершения битвы:', error);
+     }
+   }
+ };
 
   // Обработчик начала битвы после выбора карт с проверкой mounted
   const handleBattleStart = async (selectedCards) => {
     try {
       console.log('🎯 Начинаем битву с карточками:', selectedCards);
-     
-      await startCampaignBattle(user.id, currentLevel.id, user.energy);
+   
+      const result = await startCampaignBattle(user.id, currentLevel.id);
       
-      // ✅ ИСПРАВЛЕНО: проверяем mounted перед навигацией
+      console.log('✅ Результат начала битвы:', result);
+      
+      // ✅ ДОБАВЛЕНО: Сохраняем данные битвы в глобальное состояние
+      dispatch(setBattleData({
+        battleType: 'campaign',
+        currentLevel: currentLevel,
+      }));
+      
+      // ✅ проверяем mounted перед навигацией
       if (isMounted.current) {
-        // Переходим на арену
-        dispatch(navigateTo('arena'));
-      }
-    } catch (error) {
+         // Переходим на арену и передаем колбэк
+         dispatch(navigateTo({
+           screen: 'arena',
+           battleData: {
+             battleType: 'campaign',
+             currentLevel: currentLevel,
+             onBattleComplete: handleBattleComplete // ✅ передаем как параметр навигации
+           }
+         }));
+       }
+     } catch (error) {
+      
       console.error('Ошибка начала уровня:', error);
       if (isMounted.current) {
         setShowCardModal(false);
@@ -153,26 +196,13 @@ const Campaign = () => {
     }
   };
 
-  // Обработчик завершения битвы с проверкой mounted
-  const handleBattleComplete = async (isVictory) => {
-    if (isVictory && currentLevel) {
-      try {
-        await completeCampaignBattle(currentLevel.id, true);
-        
-        // Обновляем прогресс
-        await loadCampaignProgress(user.id);
-        
-        // Обрабатываем игровые события
-        await handleGameEvent(true, 'campaign');
-      } catch (error) {
-        console.error('Ошибка завершения битвы:', error);
-      }
-    }
-  };
 
   // Обработчики закрытия модальных окон
   const handleCloseModal = () => {
-    // Просто закрываем модальное окно
+    // Сбрасываем награды при закрытии модального окна
+    if (isMounted.current) {
+      setBattleRewards(null);
+    }
   };
 
   const handleCloseEnergyModal = () => {
@@ -215,7 +245,7 @@ const Campaign = () => {
     );
   }
 
-  const completedLevels = getCompletedLevels();
+ 
   const totalLevels = currentCampaign.levels?.length || 0;
 
   return (
@@ -255,6 +285,9 @@ const Campaign = () => {
                 <div className="level-rewards">
                   <span>💰 {level.goldReward}</span>
                   <span>⭐ {level.expReward}</span>
+                  {level.itemRewards && level.itemRewards.length > 0 && (
+                    <span className="items-indicator">🎁 {level.itemRewards.length}</span>
+                  )}
                 </div>
                 {status === 'completed' && <div className="level-completed">✓</div>}
                 {status === 'locked' && <div className="level-locked">🔒</div>}
@@ -262,6 +295,7 @@ const Campaign = () => {
             </div>
           );
         })}
+        
       </div>
 
       <BattleResultModal 
@@ -270,6 +304,7 @@ const Campaign = () => {
         isVictory={battleResult === 'victory'}
         onBattleComplete={handleBattleComplete}
         showContinueButton={false}
+        rewards={battleRewards} // ✅ Теперь переменная объявлена
       />
 
       <EnergyModal 
